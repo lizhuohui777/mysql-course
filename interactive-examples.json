@@ -1,0 +1,3414 @@
+{
+  "d2-constraints": {
+    "title": "同一张表，两种不合法的写入",
+    "intro": "四列只记录两件商品；规则决定新记录能否被接受。",
+    "limit": "概念演示，以已声明并启用的MySQL主键、NOT NULL和CHECK规则为条件，不是SQLite约束实测。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/create-table.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/create-table-check-constraints.html"
+    ],
+    "diagram": {
+      "kind": "tables",
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ]
+          ]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "重复编号",
+        "assumption": "id是主键；两条记录的编号分别是1和2。",
+        "steps": [
+          {
+            "title": "已有编号",
+            "text": "商品1已经占用id = 1。名称可以重复，但主键不能重复。",
+            "columns": [
+              "products.id"
+            ],
+            "rows": [
+              "products:0"
+            ]
+          },
+          {
+            "title": "再插入编号1",
+            "text": "尝试写入(1, '茶', 6, 3)。INT类型能保存1，却不能单独判断是否重复。",
+            "rows": [
+              "products:0"
+            ]
+          },
+          {
+            "title": "主键拒绝写入",
+            "text": "普通INSERT违反主键规则，报错；原来的商品1不被新商品替换。",
+            "result": "表中仍是商品1和2。"
+          }
+        ]
+      },
+      {
+        "label": "负数库存",
+        "assumption": "stock同时声明NOT NULL与CHECK (stock >= 0)。",
+        "steps": [
+          {
+            "title": "已有库存",
+            "text": "商品2的库存是6，满足声明的条件。",
+            "columns": [
+              "products.stock"
+            ],
+            "rows": [
+              "products:1"
+            ]
+          },
+          {
+            "title": "尝试改成−1",
+            "text": "UPDATE若把商品2的stock改成−1，条件stock >= 0为FALSE。",
+            "rows": [
+              "products:1"
+            ]
+          },
+          {
+            "title": "条件检查拒绝修改",
+            "text": "负数修改被拒绝；库存仍为6。若试图写入NULL，则由NOT NULL拒绝。",
+            "result": "类型合法，不代表业务值合法。"
+          }
+        ]
+      }
+    ]
+  },
+  "d2-1nf": {
+    "title": "编号清单与单个名称",
+    "intro": "字段是否需要拆分，取决于里面的值是否需要分别处理。",
+    "limit": "编号清单按独立商品引用使用；名称按整体使用。不是要求将所有字符串拆成字符。",
+    "references": [
+      "https://www.db-book.com/slides-dir/PDF-dir/ch7.pdf"
+    ],
+    "diagram": {
+      "kind": "tables",
+      "tables": [
+        {
+          "name": "orders",
+          "columns": [
+            "order_id",
+            "product_ids"
+          ],
+          "rows": [
+            [
+              101,
+              "1,2"
+            ],
+            [
+              102,
+              "1"
+            ]
+          ]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "多个商品编号",
+        "assumption": "订单101含商品1和2，订单102含商品1。",
+        "steps": [
+          {
+            "title": "清单放在一个格子",
+            "text": "product_ids的1,2实际上包含两个要独立查询和引用的编号。",
+            "columns": [
+              "orders.product_ids"
+            ]
+          },
+          {
+            "title": "改成明细行",
+            "text": "一行一对订单编号与商品编号，订单101对应两行。重复订单号表示不同明细。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "order_items",
+                  "columns": [
+                    "order_id",
+                    "product_id"
+                  ],
+                  "rows": [
+                    [
+                      101,
+                      1
+                    ],
+                    [
+                      101,
+                      2
+                    ],
+                    [
+                      102,
+                      1
+                    ]
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "title": "直接筛选商品2",
+            "text": "WHERE product_id = 2匹配第二行，得到订单101，不再需要拆字符串。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "order_items",
+                  "columns": [
+                    "order_id",
+                    "product_id"
+                  ],
+                  "rows": [
+                    [
+                      101,
+                      1
+                    ],
+                    [
+                      101,
+                      2
+                    ],
+                    [
+                      102,
+                      1
+                    ]
+                  ]
+                }
+              ]
+            },
+            "rows": [
+              "order_items:1"
+            ],
+            "result": "商品2出现在订单101中。"
+          }
+        ]
+      },
+      {
+        "label": "一个商品名称",
+        "assumption": "name表示一个整体名称，不按其中字符建立独立引用。",
+        "diagram": {
+          "kind": "tables",
+          "tables": [
+            {
+              "name": "products",
+              "columns": [
+                "id",
+                "name"
+              ],
+              "rows": [
+                [
+                  1,
+                  "水"
+                ],
+                [
+                  3,
+                  "牛奶"
+                ]
+              ]
+            }
+          ]
+        },
+        "steps": [
+          {
+            "title": "一个名称值",
+            "text": "牛奶是商品3的一个名称值。两个汉字不等于两个商品名称。",
+            "rows": [
+              "products:1"
+            ]
+          },
+          {
+            "title": "按照名称查询",
+            "text": "WHERE name = '牛奶'可直接筛选整段名称，不需要拆成牛和奶。",
+            "columns": [
+              "products.name"
+            ]
+          },
+          {
+            "title": "保留完整名称",
+            "text": "原子性指模型中的整体值，不能从字数判断是否违反1NF。",
+            "result": "名称保持为一个字段。"
+          }
+        ]
+      }
+    ]
+  },
+  "d2-2nf": {
+    "title": "同一商品名称，为什么写了两次？",
+    "intro": "名称属于商品，数量属于订单里的具体商品明细。",
+    "limit": "业务约定同一订单内同一商品只有一行；唯一候选键是(order_id, product_id)，当前商品名称由product_id决定。",
+    "references": [
+      "https://www.db-book.com/slides-dir/PDF-dir/ch7.pdf"
+    ],
+    "diagram": {
+      "kind": "tables",
+      "tables": [
+        {
+          "name": "order_items",
+          "columns": [
+            "order_id",
+            "product_id",
+            "product_name",
+            "quantity"
+          ],
+          "rows": [
+            [
+              101,
+              1,
+              "水",
+              2
+            ],
+            [
+              102,
+              1,
+              "水",
+              1
+            ],
+            [
+              101,
+              2,
+              "面包",
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "名称放在明细",
+        "assumption": "订单101买商品1两件，订单102买同一商品一件。",
+        "steps": [
+          {
+            "title": "识别一条明细",
+            "text": "order_id和product_id合起来才能识别一行，两列组成候选键。",
+            "columns": [
+              "order_items.order_id",
+              "order_items.product_id"
+            ]
+          },
+          {
+            "title": "名称只需要商品编号",
+            "text": "前两行product_id都是1，因此product_name都是水；不需要订单号就能确定名称。",
+            "columns": [
+              "order_items.product_name"
+            ],
+            "rows": [
+              "order_items:0",
+              "order_items:1"
+            ]
+          },
+          {
+            "title": "改名要重复维护",
+            "text": "商品1改叫饮用水，若只改第一行，第二行仍叫水，两个名称会冲突。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "order_items",
+                  "columns": [
+                    "order_id",
+                    "product_id",
+                    "product_name",
+                    "quantity"
+                  ],
+                  "rows": [
+                    [
+                      101,
+                      1,
+                      "饮用水",
+                      2
+                    ],
+                    [
+                      102,
+                      1,
+                      "水",
+                      1
+                    ],
+                    [
+                      101,
+                      2,
+                      "面包",
+                      1
+                    ]
+                  ]
+                }
+              ]
+            },
+            "result": "部分依赖造成重复维护。"
+          }
+        ]
+      },
+      {
+        "label": "名称放在商品表",
+        "assumption": "商品表管理当前名称；订单明细管理各自的购买数量。",
+        "diagram": {
+          "kind": "tables",
+          "tables": [
+            {
+              "name": "products",
+              "columns": [
+                "product_id",
+                "product_name"
+              ],
+              "rows": [
+                [
+                  1,
+                  "水"
+                ],
+                [
+                  2,
+                  "面包"
+                ]
+              ]
+            },
+            {
+              "name": "order_items",
+              "columns": [
+                "order_id",
+                "product_id",
+                "quantity"
+              ],
+              "rows": [
+                [
+                  101,
+                  1,
+                  2
+                ],
+                [
+                  102,
+                  1,
+                  1
+                ],
+                [
+                  101,
+                  2,
+                  1
+                ]
+              ]
+            }
+          ]
+        },
+        "steps": [
+          {
+            "title": "一处保存名称",
+            "text": "商品1在products中只有一个名称位置。",
+            "rows": [
+              "products:0"
+            ],
+            "columns": [
+              "products.product_name"
+            ]
+          },
+          {
+            "title": "明细保留编号与数量",
+            "text": "两条明细仍通过product_id指向商品1，但数量分别是2和1。",
+            "rows": [
+              "order_items:0",
+              "order_items:1"
+            ],
+            "columns": [
+              "order_items.quantity"
+            ]
+          },
+          {
+            "title": "改名不修改明细",
+            "text": "只修改products中商品1的名称，明细中的编号和购买数量不受影响。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "products",
+                  "columns": [
+                    "product_id",
+                    "product_name"
+                  ],
+                  "rows": [
+                    [
+                      1,
+                      "饮用水"
+                    ],
+                    [
+                      2,
+                      "面包"
+                    ]
+                  ]
+                },
+                {
+                  "name": "order_items",
+                  "columns": [
+                    "order_id",
+                    "product_id",
+                    "quantity"
+                  ],
+                  "rows": [
+                    [
+                      101,
+                      1,
+                      2
+                    ],
+                    [
+                      102,
+                      1,
+                      1
+                    ],
+                    [
+                      101,
+                      2,
+                      1
+                    ]
+                  ]
+                }
+              ]
+            },
+            "result": "名称依赖商品编号；数量依赖整个明细键。"
+          }
+        ]
+      }
+    ]
+  },
+  "d2-3nf": {
+    "title": "类别改名，应该改几个位置？",
+    "intro": "两件商品属于同一类别，类别名称是同一个事实。",
+    "limit": "业务约定商品编号是唯一候选键，每件商品属于一个类别，category_id决定category_name；类别名不作为候选键。",
+    "references": [
+      "https://www.db-book.com/slides-dir/PDF-dir/ch7.pdf"
+    ],
+    "diagram": {
+      "kind": "tables",
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "product_id",
+            "name",
+            "category_id",
+            "category_name"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              10,
+              "饮品"
+            ],
+            [
+              3,
+              "牛奶",
+              10,
+              "饮品"
+            ]
+          ]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "类别名重复保存",
+        "assumption": "商品1和3均属于类别10，类别10的名称是饮品。",
+        "steps": [
+          {
+            "title": "商品编号确定类别",
+            "text": "知道商品1，就知道它的category_id是10。",
+            "rows": [
+              "products:0"
+            ],
+            "columns": [
+              "products.product_id",
+              "products.category_id"
+            ]
+          },
+          {
+            "title": "类别编号确定类别名称",
+            "text": "只需要知道类别10，就能确定名称饮品；这个事实不属于某一件商品。",
+            "columns": [
+              "products.category_id",
+              "products.category_name"
+            ]
+          },
+          {
+            "title": "漏改造成矛盾",
+            "text": "若只把商品1的类别名改成饮料，商品3仍写饮品，同一个类别就出现两个名称。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "products",
+                  "columns": [
+                    "product_id",
+                    "name",
+                    "category_id",
+                    "category_name"
+                  ],
+                  "rows": [
+                    [
+                      1,
+                      "水",
+                      10,
+                      "饮料"
+                    ],
+                    [
+                      3,
+                      "牛奶",
+                      10,
+                      "饮品"
+                    ]
+                  ]
+                }
+              ]
+            },
+            "result": "product_id → category_id → category_name。"
+          }
+        ]
+      },
+      {
+        "label": "类别独立维护",
+        "assumption": "类别表保存名称，商品表只引用类别编号。",
+        "diagram": {
+          "kind": "tables",
+          "tables": [
+            {
+              "name": "products",
+              "columns": [
+                "product_id",
+                "name",
+                "category_id"
+              ],
+              "rows": [
+                [
+                  1,
+                  "水",
+                  10
+                ],
+                [
+                  3,
+                  "牛奶",
+                  10
+                ]
+              ]
+            },
+            {
+              "name": "categories",
+              "columns": [
+                "category_id",
+                "category_name"
+              ],
+              "rows": [
+                [
+                  10,
+                  "饮品"
+                ]
+              ]
+            }
+          ]
+        },
+        "steps": [
+          {
+            "title": "类别名只保存一份",
+            "text": "类别10在categories中有独立记录。商品1和3都引用编号10。",
+            "rows": [
+              "categories:0"
+            ]
+          },
+          {
+            "title": "更新一个类别记录",
+            "text": "将类别10改叫饮料，只改categories这一行。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "products",
+                  "columns": [
+                    "product_id",
+                    "name",
+                    "category_id"
+                  ],
+                  "rows": [
+                    [
+                      1,
+                      "水",
+                      10
+                    ],
+                    [
+                      3,
+                      "牛奶",
+                      10
+                    ]
+                  ]
+                },
+                {
+                  "name": "categories",
+                  "columns": [
+                    "category_id",
+                    "category_name"
+                  ],
+                  "rows": [
+                    [
+                      10,
+                      "饮料"
+                    ]
+                  ]
+                }
+              ]
+            },
+            "rows": [
+              "categories:0"
+            ]
+          },
+          {
+            "title": "无商品也能保留类别",
+            "text": "即使删除该类别所有商品，类别表中的记录仍可独立保留；外键若存在，删除动作还需遵守声明规则。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "products",
+                  "columns": [
+                    "product_id",
+                    "name",
+                    "category_id"
+                  ],
+                  "rows": []
+                },
+                {
+                  "name": "categories",
+                  "columns": [
+                    "category_id",
+                    "category_name"
+                  ],
+                  "rows": [
+                    [
+                      10,
+                      "饮料"
+                    ]
+                  ]
+                }
+              ]
+            },
+            "result": "类别的存在不依赖某一件商品。"
+          }
+        ]
+      }
+    ]
+  },
+  "d2-delete": {
+    "title": "删除后，表还剩下什么？",
+    "intro": "观察记录和表定义，不把三条命令当作同一种删除。",
+    "limit": "MySQL普通InnoDB表概念示意；TRUNCATE情形假设没有阻止操作的外键引用等条件。示例不执行DDL，也不模拟用户回滚。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/delete.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/drop-table.html"
+    ],
+    "diagram": {
+      "kind": "tables",
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ]
+          ]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "DELETE筛选一行",
+        "assumption": "目标只删除id = 1的商品，保留其他商品。",
+        "steps": [
+          {
+            "title": "确认目标",
+            "text": "SELECT * FROM products WHERE id = 1只匹配第一行。",
+            "rows": [
+              "products:0"
+            ]
+          },
+          {
+            "title": "按相同条件删除",
+            "text": "DELETE FROM products WHERE id = 1删除第一行，表定义和商品2还在。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "products",
+                  "columns": [
+                    "id",
+                    "name",
+                    "price",
+                    "stock"
+                  ],
+                  "rows": [
+                    [
+                      2,
+                      "面包",
+                      5,
+                      6
+                    ]
+                  ]
+                }
+              ]
+            },
+            "result": "剩1行，表仍可查询和插入。"
+          },
+          {
+            "title": "回滚有条件",
+            "text": "若删除在未提交事务内，InnoDB可撤销；若已经自动或手动提交，就不能再靠ROLLBACK恢复。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "products",
+                  "columns": [
+                    "id",
+                    "name",
+                    "price",
+                    "stock"
+                  ],
+                  "rows": [
+                    [
+                      2,
+                      "面包",
+                      5,
+                      6
+                    ]
+                  ]
+                }
+              ]
+            },
+            "result": "不能把“支持事务”理解成“随时可以撤销”。"
+          }
+        ]
+      },
+      {
+        "label": "TRUNCATE与DROP",
+        "assumption": "分别从相同的两行商品表出发比较，不是连续执行。",
+        "steps": [
+          {
+            "title": "相同起点",
+            "text": "两种要求不同：一是清空商品但保留表，二是彻底移除商品表。"
+          },
+          {
+            "title": "TRUNCATE清空",
+            "text": "TRUNCATE TABLE products之后没有商品行，仍有表定义，可以重新插入。若有AUTO_INCREMENT，自增计数被重置。",
+            "diagram": {
+              "kind": "tables",
+              "tables": [
+                {
+                  "name": "products",
+                  "columns": [
+                    "id",
+                    "name",
+                    "price",
+                    "stock"
+                  ],
+                  "rows": []
+                }
+              ]
+            },
+            "result": "空表不是没有表。"
+          },
+          {
+            "title": "DROP移除表",
+            "text": "从原始表执行DROP TABLE products后，products表不再存在；再次查询会找不到表。两者都不能用用户ROLLBACK撤销。",
+            "diagram": {
+              "kind": "tables",
+              "tables": []
+            },
+            "result": "表定义与数据都被删除。"
+          }
+        ]
+      }
+    ]
+  },
+  "d1-tables": {
+    "title": "从一张表到一份查询结果",
+    "intro": "先分清行和列，再看怎样从表里取出信息。",
+    "limit": "图中是数据组织和查询目标的示意，不是磁盘存储布局，也不是MySQL执行计划。SQL结果中的行顺序需要ORDER BY才有保证。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html",
+      "https://www.w3schools.com/mysql/mysql_select.asp"
+    ],
+    "diagram": {
+      "kind": "tables",
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "取一行",
+        "assumption": "商品编号2对应面包。本例只观察这一行。",
+        "steps": [
+          {
+            "title": "先找到商品表",
+            "text": "products是表名。表头规定四列，每一行保存一条商品记录；表中的内容和操作它的SQL是两件事。"
+          },
+          {
+            "title": "选中编号2的记录",
+            "text": "沿id这一列找到2，这一整行记录的是面包。行是记录，不是某个固定位置上的格子。",
+            "rows": [
+              "products:1"
+            ],
+            "columns": [
+              "products.id"
+            ]
+          },
+          {
+            "title": "再选择要看的列",
+            "text": "只想知道名称和价格，就看name、price两列。把不需要的列排除，并不等于把原表的列删除。",
+            "rows": [
+              "products:1"
+            ],
+            "columns": [
+              "products.name",
+              "products.price"
+            ]
+          },
+          {
+            "title": "结果是这条记录的部分信息",
+            "text": "本次只得到“面包，5”。查询返回结果供程序使用，原表仍保留四列、四行。",
+            "rows": [
+              "products:1"
+            ],
+            "result": "name = 面包；price = 5"
+          }
+        ]
+      },
+      {
+        "label": "取一列",
+        "assumption": "现在想看所有商品名称，不按位置只取一行。",
+        "steps": [
+          {
+            "title": "问题从一条记录变成一个属性",
+            "text": "要看所有name，就需要从每一条记录取出名称。还是同一张表，只是选取信息的方向改变了。"
+          },
+          {
+            "title": "沿name这一列读取",
+            "text": "name是列名，水、面包、牛奶、水是各行的值。列名相同，不代表所有行的值相同。",
+            "columns": [
+              "products.name"
+            ]
+          },
+          {
+            "title": "名称相同不等于同一条记录",
+            "text": "第一行和第四行都叫水，但编号分别是1和4。查询名称会保留两个“水”；识别记录要用可靠的键。",
+            "rows": [
+              "products:0",
+              "products:3"
+            ],
+            "columns": [
+              "products.name"
+            ],
+            "result": "水、面包、牛奶、水"
+          }
+        ]
+      }
+    ]
+  },
+  "d1-models": {
+    "title": "同样的商品，怎样组织记录",
+    "intro": "比较统一表结构和文档结构，不把一种模型说成永远更好。",
+    "limit": "JSON只示意文档的组织方式，不是MongoDB实测。文档数据库也可以设置验证规则、索引和事务，不能把非关系型等同于无结构或无事务。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html",
+      "https://www.mongodb.com/docs/manual/"
+    ],
+    "diagram": {
+      "kind": "documents",
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "documents": [
+        {
+          "id": 1,
+          "name": "水",
+          "tags": [
+            "饮品"
+          ]
+        },
+        {
+          "id": 2,
+          "name": "面包",
+          "weight": 100
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "统一表结构",
+        "assumption": "所有商品采用id、name、price、stock四列。",
+        "steps": [
+          {
+            "title": "先约定列",
+            "text": "先约定名称、价格等属性要放在哪些列，之后每条记录都按这套结构表达。统一结构便于写相同的查询。",
+            "show": "table"
+          },
+          {
+            "title": "相同结构承载不同的值",
+            "text": "牛奶的stock为0，面包的stock为6。两行遵守相同列结构，但属性值不同。",
+            "show": "table",
+            "rows": [
+              "products:1",
+              "products:2"
+            ],
+            "columns": [
+              "products.stock"
+            ]
+          },
+          {
+            "title": "模型决定了怎样理解这份数据",
+            "text": "关系模型把记录组织为关系，入门可以用表理解。表之间可以声明外键，但没有外键的表仍可以是关系型表。",
+            "show": "table",
+            "result": "共同的列结构，不是共同的属性值"
+          }
+        ]
+      },
+      {
+        "label": "文档结构",
+        "assumption": "示意两条记录具有不同的附加属性：标签或重量。",
+        "steps": [
+          {
+            "title": "每份文档仍有明确字段",
+            "text": "第一份文档记录水的id、name和tags；第二份记录面包的id、name和weight。这里的花括号包住一份记录。",
+            "active": 0
+          },
+          {
+            "title": "附加字段可以不同",
+            "text": "水有一个标签数组，面包记录重量。文档模型可以表达这种形状差异；这不意味着系统从不检查字段。",
+            "active": 1
+          },
+          {
+            "title": "根据问题选择模型",
+            "text": "统一商品结构适合用表讲解；附加属性变化较多时，文档是一种选择。不能仅凭模型断言谁一定更快。",
+            "result": "非关系型包含文档、键值、图等多种模型"
+          }
+        ]
+      }
+    ]
+  },
+  "d1-keys": {
+    "title": "订单究竟指向哪件商品",
+    "intro": "名称可能重复；用商品编号定位，再观察订单的引用。",
+    "limit": "为这个例子约定products.id是主键，orders.product_id是已声明并启用检查的外键。箭头通过编号相等来表达参照，不代表所有表必须有外键。图示不是SQLite或MySQL约束实测。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/create-table.html",
+      "https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html",
+      "https://www.db-book.com/slides-dir/PDF-dir/ch2.pdf"
+    ],
+    "diagram": {
+      "kind": "tables",
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        },
+        {
+          "name": "orders",
+          "columns": [
+            "id",
+            "product_id",
+            "quantity"
+          ],
+          "rows": [
+            [
+              101,
+              1,
+              2
+            ],
+            [
+              102,
+              1,
+              1
+            ],
+            [
+              103,
+              2,
+              1
+            ],
+            [
+              104,
+              4,
+              1
+            ]
+          ]
+        }
+      ]
+    },
+    "cases": [
+      {
+        "label": "引用存在的商品",
+        "assumption": "编号1和4是两件不同的商品，名字恰好都叫水。",
+        "steps": [
+          {
+            "title": "先区分两条同名记录",
+            "text": "只说“水”不够：商品1和商品4都符合。我们在设计时约定id唯一，而不是把名称碰巧不同当作唯一规则。",
+            "rows": [
+              "products:0",
+              "products:3"
+            ],
+            "columns": [
+              "products.id",
+              "products.name"
+            ]
+          },
+          {
+            "title": "订单引用的是编号",
+            "text": "订单101的product_id是1，所以找到商品主键id为1的一行，不是找到所有名字叫水的行。",
+            "rows": [
+              "orders:0",
+              "products:0"
+            ],
+            "columns": [
+              "orders.product_id",
+              "products.id"
+            ],
+            "result": "订单101 → 商品1"
+          },
+          {
+            "title": "多条订单可以引用同一商品",
+            "text": "订单102也引用商品1。商品主键不能重复，但订单的外键值可以重复；这是多条订单指向同一商品。",
+            "rows": [
+              "orders:0",
+              "orders:1",
+              "products:0"
+            ],
+            "columns": [
+              "orders.product_id",
+              "products.id"
+            ],
+            "result": "101和102都引用商品1"
+          }
+        ]
+      },
+      {
+        "label": "引用不存在的商品",
+        "assumption": "尝试将订单104的product_id从4改为9；本例外键检查启用。",
+        "diagram": {
+          "kind": "tables",
+          "tables": [
+            {
+              "name": "products",
+              "columns": [
+                "id",
+                "name",
+                "price",
+                "stock"
+              ],
+              "rows": [
+                [
+                  1,
+                  "水",
+                  3,
+                  10
+                ],
+                [
+                  2,
+                  "面包",
+                  5,
+                  6
+                ],
+                [
+                  3,
+                  "牛奶",
+                  8,
+                  0
+                ],
+                [
+                  4,
+                  "水",
+                  4,
+                  2
+                ]
+              ]
+            },
+            {
+              "name": "orders",
+              "columns": [
+                "id",
+                "product_id",
+                "quantity"
+              ],
+              "rows": [
+                [
+                  101,
+                  1,
+                  2
+                ],
+                [
+                  102,
+                  1,
+                  1
+                ],
+                [
+                  103,
+                  2,
+                  1
+                ],
+                [
+                  104,
+                  4,
+                  1
+                ]
+              ]
+            }
+          ]
+        },
+        "steps": [
+          {
+            "title": "尝试修改引用编号",
+            "text": "尝试把订单104的product_id改为9，表中已存值仍是4。待检查的9不会凭空生成商品记录，也不能因为它看起来像编号就认为引用有效。",
+            "rows": [
+              "orders:3"
+            ],
+            "columns": [
+              "orders.product_id"
+            ],
+            "result": "尝试写入product_id = 9；已存值仍为4"
+          },
+          {
+            "title": "在商品主键里找不到9",
+            "text": "商品编号只有1、2、3、4，找不到本次尝试引用的9。外键检查的是准备写入的参照是否有效。",
+            "columns": [
+              "products.id",
+              "orders.product_id"
+            ],
+            "rows": [
+              "orders:3"
+            ],
+            "result": "没有id = 9的商品"
+          },
+          {
+            "title": "约束阻止悬空引用",
+            "text": "声明并启用外键检查时，这次修改被拒绝，订单104的product_id仍为4。如果根本没有声明外键，数据库不会自动替业务补上这条规则。",
+            "rows": [
+              "orders:3"
+            ],
+            "result": "拒绝写入9；订单104的product_id仍为4"
+          }
+        ]
+      }
+    ]
+  },
+  "d1-types": {
+    "title": "固定长度与变长：数的是字符",
+    "intro": "只观察短字符串的长度，不用SQLite验证MySQL类型行为。",
+    "limit": "这是MySQL CHAR/VARCHAR的概念图，不是InnoDB磁盘逐字节布局。空格格子示意CHAR补齐；长度格子示意VARCHAR的长度信息，实际前缀为1或2字节。默认取回、字符集、排序规则和SQL模式各有适用条件。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/char.html"
+    ],
+    "diagram": {
+      "kind": "text",
+      "value": "AB"
+    },
+    "cases": [
+      {
+        "label": "两个英文字母",
+        "assumption": "写入AB，比较CHAR(4)和VARCHAR(4)；没有超长值。",
+        "steps": [
+          {
+            "title": "先数原来的字符",
+            "text": "AB有两个字符。类型括号里的4是字符数上限，不是统一的4字节。编码不同，实际字节也可能不同。",
+            "value": "AB",
+            "focus": "input"
+          },
+          {
+            "title": "CHAR固定为声明的长度",
+            "text": "CHAR(4)按固定长度处理，短值以空格补齐到4个字符。概念图只用两个空格格子表达这一步。",
+            "value": "AB",
+            "focus": "char"
+          },
+          {
+            "title": "VARCHAR保留实际内容长度",
+            "text": "VARCHAR(4)可以保存0到4个字符的短值，AB的实际内容仍是2个字符，另有长度信息；不是只存一个指针。",
+            "value": "AB",
+            "focus": "varchar"
+          },
+          {
+            "title": "读取和比较还要分开",
+            "text": "默认取回时CHAR的尾空格会被去掉，VARCHAR通常保留长度内的尾空格。字符串比较是否忽略尾空格还取决于排序规则。",
+            "value": "AB",
+            "focus": "result",
+            "result": "不能据此断言CHAR一定更快"
+          }
+        ]
+      },
+      {
+        "label": "一个中文字符",
+        "assumption": "写入猫，一个字符；同样比较CHAR(4)和VARCHAR(4)。",
+        "steps": [
+          {
+            "title": "中文也按字符数限制",
+            "text": "猫在本例是一个字符，不应照搬“每个汉字必定2字节”的说法。存储字节需要结合实际字符集。",
+            "value": "猫",
+            "focus": "input"
+          },
+          {
+            "title": "CHAR按固定长度处理",
+            "text": "CHAR(4)仍以4个字符作为声明长度；图中一个猫加三个空格格子，不表示它们各占一个字节。",
+            "value": "猫",
+            "focus": "char"
+          },
+          {
+            "title": "VARCHAR按实际内容长度处理",
+            "text": "VARCHAR(4)的实际内容是一个字符，再加长度信息。它并不因为写了4就必须存四个汉字。",
+            "value": "猫",
+            "focus": "varchar",
+            "result": "字符数与字节数是两种不同的计数"
+          }
+        ]
+      }
+    ]
+  },
+  "d3-layers": {
+    "kind": "static",
+    "title": "一次查询，请求与记录的来回",
+    "intro": "箭头上方是请求，下方是返回；服务层与InnoDB都位于MySQL服务器内。",
+    "cards": [
+      {
+        "title": "SELECT name FROM products WHERE id=2",
+        "text": "不是两个数据库：商品只由表所选的InnoDB管理，服务层负责安排操作与组织结果。",
+        "diagram": {
+          "kind": "graph",
+          "width": 850,
+          "height": 290,
+          "nodes": [
+            {
+              "id": "client",
+              "x": 10,
+              "y": 95,
+              "width": 150,
+              "height": 100,
+              "title": "客户端",
+              "lines": [
+                "发送SQL",
+                "接收name结果"
+              ]
+            },
+            {
+              "id": "service",
+              "x": 205,
+              "y": 80,
+              "width": 250,
+              "height": 140,
+              "title": "服务层",
+              "lines": [
+                "理解：id=2，取name",
+                "向引擎请求目标记录",
+                "由记录产生name结果"
+              ]
+            },
+            {
+              "id": "engine",
+              "x": 555,
+              "y": 80,
+              "width": 270,
+              "height": 140,
+              "title": "InnoDB引擎",
+              "lines": [
+                "取得编号2记录",
+                "id=2，name=面包",
+                "记录交给服务层"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "client",
+              "to": "service",
+              "label": "SQL",
+              "from_side": "right",
+              "to_side": "left",
+              "offset": 0.3
+            },
+            {
+              "from": "service",
+              "to": "engine",
+              "label": "取编号2",
+              "from_side": "right",
+              "to_side": "left",
+              "offset": 0.3
+            },
+            {
+              "from": "engine",
+              "to": "service",
+              "label": "返回记录",
+              "from_side": "left",
+              "to_side": "right",
+              "offset": 0.8
+            },
+            {
+              "from": "service",
+              "to": "client",
+              "label": "面包",
+              "from_side": "left",
+              "to_side": "right",
+              "offset": 0.8
+            }
+          ],
+          "groups": [
+            {
+              "x": 185,
+              "y": 20,
+              "width": 655,
+              "height": 245,
+              "title": "MySQL服务器：两类职责协作"
+            }
+          ]
+        }
+      }
+    ],
+    "limit": "职责示意不是线程调用栈；事务和锁机制在后续展开。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/storage-engines.html"
+    ]
+  },
+  "d3-execution": {
+    "kind": "static",
+    "title": "查询路径的两处检查",
+    "intro": "能解析、能取到匹配行，是两个不同问题。",
+    "cards": [
+      {
+        "title": "合法的查询",
+        "text": "name存在，计划按id定位，执行后得到面包。",
+        "flow": [
+          "解析通过",
+          "选择计划",
+          "调用引擎取记录",
+          "返回name"
+        ]
+      },
+      {
+        "title": "列名nam不存在",
+        "text": "对象解析失败，没有正常结果。这个问题与是否有索引无关。",
+        "flow": [
+          "解析nam失败",
+          "返回未知列错误",
+          "修正为name后重发"
+        ]
+      },
+      {
+        "title": "列名合法，但id=9不存在",
+        "text": "表列可以解析，仍会选择并执行计划；检查后没有匹配行，正常返回零行。",
+        "flow": [
+          "分析通过",
+          "计划并执行取行",
+          "没有id=9 → 零行"
+        ]
+      }
+    ],
+    "limit": "用常见处理链解释职责，不规定所有语句的内部实现顺序。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/select.html"
+    ]
+  },
+  "d3-pages": {
+    "kind": "lab",
+    "model": "cache",
+    "title": "同一条查询，页在不在内存",
+    "intro": "保持查询id=2不变，只改变它所在的页P是否已在缓冲池。",
+    "limit": "页号与同页记录为教学假设；图示不是实际页布局或性能测量。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html"
+    ]
+  },
+  "d3-engines": {
+    "kind": "static",
+    "title": "库存10，订单失败后主动回滚",
+    "intro": "两种引擎经历相同操作；InnoDB这一轮的扣减尚未提交。",
+    "cards": [
+      {
+        "title": "InnoDB：可撤销未提交扣减",
+        "text": "程序主动执行ROLLBACK，不是报错自动把整笔业务撤销。",
+        "table": {
+          "name": "相同起点与操作",
+          "columns": [
+            "阶段",
+            "库存",
+            "订单",
+            "扣减状态"
+          ],
+          "rows": [
+            [
+              "开始",
+              10,
+              "未写",
+              "未修改"
+            ],
+            [
+              "扣1",
+              9,
+              "未写",
+              "未提交"
+            ],
+            [
+              "订单失败",
+              9,
+              "未写成",
+              "仍未提交"
+            ],
+            [
+              "主动ROLLBACK",
+              10,
+              "未写成",
+              "扣减已撤销"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "MyISAM：不支持事务回滚",
+        "text": "不能靠ROLLBACK把已写库存恢复；业务若要这种保证，选择支持它的引擎。",
+        "table": {
+          "name": "相同起点与操作",
+          "columns": [
+            "阶段",
+            "库存",
+            "订单",
+            "扣减状态"
+          ],
+          "rows": [
+            [
+              "开始",
+              10,
+              "未写",
+              "未修改"
+            ],
+            [
+              "扣1",
+              9,
+              "未写",
+              "已写入"
+            ],
+            [
+              "订单失败",
+              9,
+              "未写成",
+              "仍为9"
+            ],
+            [
+              "执行ROLLBACK",
+              9,
+              "未写成",
+              "不能事务撤销"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "这里只比较事务能力；不是在内嵌SQLite中执行MyISAM。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/myisam-storage-engine.html"
+    ]
+  },
+  "d4-purpose": {
+    "kind": "static",
+    "title": "跳过不相关记录的两条路径",
+    "intro": "同样找id=8，扫描检查候选行，索引先排除不相关范围。",
+    "cards": [
+      {
+        "title": "逐行扫描",
+        "text": "假设扫描顺序为1、3、5、8。依次比较，直到找到8。",
+        "flow": [
+          "检查1：不匹配",
+          "检查3：不匹配",
+          "检查5：不匹配",
+          "检查8：匹配"
+        ]
+      },
+      {
+        "title": "按id索引定位",
+        "text": "根用5划分范围，8走右叶，不访问含1、3的左叶。",
+        "flow": [
+          "根：分隔键5",
+          "8≥5 → 右叶5、8",
+          "定位8 → 取对应记录"
+        ]
+      }
+    ],
+    "limit": "扫描次数和树层数为小例子；不比较真实耗时。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/mysql-indexes.html"
+    ]
+  },
+  "d4-bplus": {
+    "kind": "lab",
+    "model": "path",
+    "title": "按分隔键选择路径",
+    "intro": "根的分隔键是5，左叶1、3，右叶5、8。选择目标后，亲自选一条分支。",
+    "limit": "图省略页内目录、空闲空间及分裂过程；分隔键只是教学表示。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-physical-structure.html"
+    ]
+  },
+  "d4-fanout": {
+    "kind": "static",
+    "title": "同样四片叶页，为什么多一层",
+    "intro": "固定L1至L4和目标L4，只改变每个内部节点最多指向几片子页。",
+    "cards": [
+      {
+        "title": "扇出4：根直接管理四叶",
+        "text": "同样的L4，路径是根→L4，共2页。每条边是一个子页引用。",
+        "diagram": {
+          "kind": "graph",
+          "width": 540,
+          "height": 245,
+          "nodes": [
+            {
+              "id": "R",
+              "x": 205,
+              "y": 10,
+              "width": 130,
+              "height": 65,
+              "title": "根",
+              "lines": [
+                "4个子页引用"
+              ]
+            },
+            {
+              "id": "L1",
+              "x": 10,
+              "y": 165,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L1",
+              "lines": [
+                "相同叶页"
+              ]
+            },
+            {
+              "id": "L2",
+              "x": 145,
+              "y": 165,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L2",
+              "lines": [
+                "相同叶页"
+              ]
+            },
+            {
+              "id": "L3",
+              "x": 280,
+              "y": 165,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L3",
+              "lines": [
+                "相同叶页"
+              ]
+            },
+            {
+              "id": "L4",
+              "x": 415,
+              "y": 165,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L4",
+              "lines": [
+                "相同叶页"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "R",
+              "to": "L1",
+              "label": "",
+              "active": false
+            },
+            {
+              "from": "R",
+              "to": "L2",
+              "label": "",
+              "active": false
+            },
+            {
+              "from": "R",
+              "to": "L3",
+              "label": "",
+              "active": false
+            },
+            {
+              "from": "R",
+              "to": "L4",
+              "label": "",
+              "active": true
+            }
+          ],
+          "groups": []
+        },
+        "flow": [
+          "根直接指向四叶",
+          "本次路径：根、L4，共2页"
+        ]
+      },
+      {
+        "title": "扇出2：根需要中间节点",
+        "text": "根只能管理M1、M2，目标L4由M2管理；路径根→M2→L4，共3页。",
+        "diagram": {
+          "kind": "graph",
+          "width": 540,
+          "height": 320,
+          "nodes": [
+            {
+              "id": "R",
+              "x": 205,
+              "y": 5,
+              "width": 130,
+              "height": 60,
+              "title": "根",
+              "lines": [
+                "2个子页引用"
+              ]
+            },
+            {
+              "id": "M1",
+              "x": 80,
+              "y": 105,
+              "width": 120,
+              "height": 60,
+              "title": "中间页M1",
+              "lines": [
+                "管理L1、L2"
+              ]
+            },
+            {
+              "id": "M2",
+              "x": 340,
+              "y": 105,
+              "width": 120,
+              "height": 60,
+              "title": "中间页M2",
+              "lines": [
+                "管理L3、L4"
+              ]
+            },
+            {
+              "id": "L1",
+              "x": 10,
+              "y": 240,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L1",
+              "lines": [
+                "相同叶页"
+              ]
+            },
+            {
+              "id": "L2",
+              "x": 145,
+              "y": 240,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L2",
+              "lines": [
+                "相同叶页"
+              ]
+            },
+            {
+              "id": "L3",
+              "x": 280,
+              "y": 240,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L3",
+              "lines": [
+                "相同叶页"
+              ]
+            },
+            {
+              "id": "L4",
+              "x": 415,
+              "y": 240,
+              "width": 115,
+              "height": 65,
+              "title": "叶页L4",
+              "lines": [
+                "相同叶页"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "R",
+              "to": "M1",
+              "label": ""
+            },
+            {
+              "from": "R",
+              "to": "M2",
+              "label": "",
+              "active": true
+            },
+            {
+              "from": "M1",
+              "to": "L1",
+              "label": ""
+            },
+            {
+              "from": "M1",
+              "to": "L2",
+              "label": ""
+            },
+            {
+              "from": "M2",
+              "to": "L3",
+              "label": ""
+            },
+            {
+              "from": "M2",
+              "to": "L4",
+              "label": "",
+              "active": true
+            }
+          ],
+          "groups": []
+        },
+        "flow": [
+          "根经中间页管理四叶",
+          "本次路径：根、M2、L4，共3页"
+        ]
+      }
+    ],
+    "limit": "树高比较是概念图；不推导真实记录数量与页容量。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-physical-structure.html"
+    ]
+  },
+  "d4-alternatives": {
+    "kind": "static",
+    "title": "有序键与Hash桶",
+    "intro": "这里比较能提供什么查找信息，而不是给结构排固定速度名次。",
+    "cards": [
+      {
+        "title": "B+树有序叶子",
+        "text": "等值定位到对应叶子；范围3至8定位起点后沿叶子取3、5、8。内部导航与叶子连接各有用途。",
+        "flow": [
+          "根定位起点3",
+          "左叶取3",
+          "沿叶子连接 → 右叶取5、8"
+        ]
+      },
+      {
+        "title": "Hash桶不代表大小顺序",
+        "text": "假设3、5映射桶A，8映射桶B。找8可进入B核对键，范围3至8不能由桶号推出键的连续顺序。",
+        "table": {
+          "name": "假设映射",
+          "columns": [
+            "键",
+            "桶"
+          ],
+          "rows": [
+            [
+              3,
+              "A"
+            ],
+            [
+              5,
+              "A"
+            ],
+            [
+              8,
+              "B"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "红黑树：每个节点最多两个子分支",
+        "text": "这里只画二叉分支，不展开颜色维护。要覆盖更多节点只能继续向下；与上一节根可直接指向四叶的多路结构不同。B树也多路，但内部节点可保存数据项，点查可能在内部结束。",
+        "diagram": {
+          "kind": "graph",
+          "width": 540,
+          "height": 280,
+          "nodes": [
+            {
+              "id": "R",
+              "x": 220,
+              "y": 5,
+              "width": 100,
+              "height": 65,
+              "title": "键5",
+              "lines": [
+                "节点可带数据"
+              ]
+            },
+            {
+              "id": "L",
+              "x": 100,
+              "y": 105,
+              "width": 100,
+              "height": 65,
+              "title": "键3",
+              "lines": [
+                "最多两个子分支"
+              ]
+            },
+            {
+              "id": "H",
+              "x": 365,
+              "y": 105,
+              "width": 100,
+              "height": 65,
+              "title": "键8",
+              "lines": [
+                "本图无子节点"
+              ]
+            },
+            {
+              "id": "LL",
+              "x": 35,
+              "y": 205,
+              "width": 100,
+              "height": 65,
+              "title": "键1",
+              "lines": [
+                "本图无子节点"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "R",
+              "to": "L",
+              "label": ""
+            },
+            {
+              "from": "R",
+              "to": "H",
+              "label": ""
+            },
+            {
+              "from": "L",
+              "to": "LL",
+              "label": ""
+            }
+          ],
+          "groups": []
+        }
+      }
+    ],
+    "limit": "Hash映射为假设；比较能力，不提供固定复杂度或速度排名。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/index-btree-hash.html"
+    ]
+  },
+  "d5-clustered": {
+    "kind": "static",
+    "title": "两棵树，同一批商品",
+    "intro": "右边叶子中的四行就是products的数据；左边只额外保存名称和主键。线按id对应，不表示另复制一件商品。",
+    "cards": [
+      {
+        "title": "InnoDB：名称项对应主键叶子里的行",
+        "text": "此处只画叶子内容，树上方的导航略去。两个水分别指向id=1、4，不把名称相同的商品合并。",
+        "diagram": {
+          "kind": "graph",
+          "width": 740,
+          "height": 265,
+          "nodes": [
+            {
+              "id": "secondary",
+              "x": 10,
+              "y": 25,
+              "width": 255,
+              "height": 215,
+              "title": "name二级叶子",
+              "lines": [
+                "name / id",
+                "奶 / 3",
+                "水 / 1",
+                "水 / 4",
+                "面包 / 2"
+              ]
+            },
+            {
+              "id": "primary",
+              "x": 420,
+              "y": 25,
+              "width": 310,
+              "height": 215,
+              "title": "主键叶子 = 商品行",
+              "lines": [
+                "id / name / price / stock",
+                "1 / 水 / 3 / 10",
+                "2 / 面包 / 5 / 0",
+                "3 / 奶 / 8 / 8",
+                "4 / 水 / 4 / 6"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "secondary",
+              "to": "primary",
+              "label": "id=1",
+              "from_side": "right",
+              "to_side": "left",
+              "from_offset": 0.42,
+              "to_offset": 0.32,
+              "active": true
+            },
+            {
+              "from": "secondary",
+              "to": "primary",
+              "label": "id=4",
+              "from_side": "right",
+              "to_side": "left",
+              "from_offset": 0.52,
+              "to_offset": 0.61,
+              "active": true
+            }
+          ],
+          "groups": []
+        }
+      }
+    ],
+    "limit": "省略隐藏列、外置长字段等物理细节；位置符号为假设。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ]
+  },
+  "d5-covering": {
+    "kind": "lab",
+    "model": "cover",
+    "title": "多取stock，路径为何变长",
+    "intro": "保持WHERE name=水和name二级索引不变，只改变SELECT所需的列。",
+    "limit": "对比列获取路径；省略可能引发聚簇读取的MVCC可见性检查。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-index-types.html"
+    ]
+  },
+  "d5-primary": {
+    "kind": "static",
+    "title": "三次插入，会访问几片目标页",
+    "intro": "两方案从相同页状态开始，每页容量示意为4项；本次都不会因页满分裂，只比较目标页复用。",
+    "cards": [
+      {
+        "title": "共同起点",
+        "text": "页的键范围已划分；每片都有本次需要的空位。",
+        "table": {
+          "name": "初始叶页",
+          "columns": [
+            "页",
+            "键范围",
+            "已有键"
+          ],
+          "rows": [
+            [
+              "P1",
+              "小于4",
+              "1、3"
+            ],
+            [
+              "P2",
+              "4至小于8",
+              "5、7"
+            ],
+            [
+              "P3",
+              "8及以上",
+              "8"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "连续编号9、10、11",
+        "text": "三次都到右端P3，重复利用同一目标页。P3最终为8、9、10、11。",
+        "flow": [
+          "插9 → P3",
+          "插10 → P3",
+          "插11 → P3",
+          "不同目标页：1片"
+        ]
+      },
+      {
+        "title": "分散编号2、9、6",
+        "text": "三个键分别进入不同已有范围；三次写入需访问三片目标页。",
+        "flow": [
+          "插2 → P1",
+          "插9 → P3",
+          "插6 → P2",
+          "不同目标页：3片"
+        ]
+      }
+    ],
+    "limit": "固定相同初始页和足够空位，只展示目标页局部性；真实页容量、分裂与竞争不由此小例推断。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html"
+    ]
+  },
+  "d5-names": {
+    "kind": "static",
+    "title": "同一个索引，回答不同问题",
+    "intro": "覆盖必须给出查询需求；名称不表示四选一。",
+    "cards": [
+      {
+        "title": "INDEX(name)：普通、单列、二级",
+        "text": "id为主键。SELECT id,name FROM products WHERE name='水'所需的name与id都在该二级项中，因此它覆盖这次查询；加取stock就不再够用。",
+        "table": {
+          "name": "本次查询与索引内容",
+          "columns": [
+            "索引",
+            "项中已有",
+            "SELECT所需",
+            "关系"
+          ],
+          "rows": [
+            [
+              "INDEX(name)",
+              "name、id",
+              "id、name",
+              "覆盖这次取列"
+            ],
+            [
+              "同一INDEX(name)",
+              "name、id",
+              "id、name、stock",
+              "stock需要补取"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "UNIQUE(name,price)：唯一、联合、二级",
+        "text": "唯一检查组合不重复，联合说明两列，二级说明主键外结构；SELECT id,name,price需要的列已在项中，也可覆盖这次取列。",
+        "table": {
+          "name": "同一声明的不同维度",
+          "columns": [
+            "约束",
+            "列数",
+            "组织",
+            "本次需求"
+          ],
+          "rows": [
+            [
+              "唯一",
+              "两列联合",
+              "二级",
+              "覆盖id、name、price"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "唯一索引例子假设name与price非NULL；可空唯一索引有NULL边界。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/create-index.html"
+    ]
+  },
+  "d6-prefix": {
+    "kind": "lab",
+    "model": "prefix",
+    "title": "索引列顺序与候选范围",
+    "intro": "四个索引项不变。改变列顺序或查询条件，比较定位后需要检查多少项。",
+    "limit": "字符串排序次序为简化假设；不展示跳跃扫描算法。 本例用显式教学排序奶、水、面包，不由浏览器字符串排序推断MySQL排序规则；只示意普通最左前缀定位，不模拟skip scan等其他计划。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/multiple-column-indexes.html"
+    ]
+  },
+  "d6-conditions": {
+    "kind": "static",
+    "title": "同一份名称，条件给出的定位信息不同",
+    "intro": "名称固定为水、水果、饮用水、面包。能正确筛出结果，不等于能直接定位小范围。",
+    "cards": [
+      {
+        "title": "LIKE '水%'：已知开头",
+        "text": "定位时保留相邻的水、水果作为前缀候选，跳过另外两项。图采用显式教学顺序，不推断实际排序规则。",
+        "table": {
+          "name": "相同名称集合",
+          "columns": [
+            "name",
+            "定位阶段",
+            "条件判断"
+          ],
+          "rows": [
+            [
+              "水",
+              "前缀候选",
+              "符合"
+            ],
+            [
+              "水果",
+              "前缀候选",
+              "符合"
+            ],
+            [
+              "饮用水",
+              "跳过",
+              "不符合"
+            ],
+            [
+              "面包",
+              "跳过",
+              "不符合"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "LIKE '%水%'：开头未知",
+        "text": "四项都进入本例检查范围，再过滤出水、水果、饮用水。最终筛选正确，不表示定位阶段跳过了其他项。",
+        "table": {
+          "name": "相同名称集合",
+          "columns": [
+            "name",
+            "定位阶段",
+            "额外过滤"
+          ],
+          "rows": [
+            [
+              "水",
+              "检查候选",
+              "保留"
+            ],
+            [
+              "水果",
+              "检查候选",
+              "保留"
+            ],
+            [
+              "饮用水",
+              "检查候选",
+              "保留"
+            ],
+            [
+              "面包",
+              "检查候选",
+              "排除"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "仅比较普通B+树定位能力，不声称某语法在所有版本必然不用索引。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/range-optimization.html"
+    ]
+  },
+  "d6-cost": {
+    "kind": "static",
+    "title": "相同索引收益，取决于怎样使用",
+    "intro": "先看请求与数据规模，再判断能否反复节省工作。",
+    "cards": [
+      {
+        "title": "大表高频定位",
+        "text": "每次只要一件商品，扫描大量无关行的成本会重复发生。",
+        "flow": [
+          "大量请求：各查一个id",
+          "合适索引：直接定位少量候选",
+          "验证读取收益，再权衡索引维护成本"
+        ]
+      },
+      {
+        "title": "小表偶尔整体导出",
+        "text": "所有行都是所需结果，索引不能消除这些取行工作，额外索引还要维护。",
+        "flow": [
+          "少量请求：每次要全部四行",
+          "扫描：读取全部所需行",
+          "额外定位索引：未必提供相应收益"
+        ]
+      }
+    ],
+    "limit": "90%是明确假设，不代表通用索引阈值。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/optimization-indexes.html"
+    ]
+  },
+  "d6-plan": {
+    "kind": "lab",
+    "model": "plan",
+    "title": "从查询路径读EXPLAIN",
+    "intro": "固定四行表和stock索引，SELECT还需要name。比较工作量，再把选定路径对应到手写计划。",
+    "limit": "工作量与EXPLAIN均为手写教学模型，不是实际测量或真实优化器输出；rows为示意估计。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/explain-output.html"
+    ]
+  },
+  "d7-unit": {
+    "kind": "lab",
+    "model": "transfer",
+    "title": "同一次失败，两种提交边界",
+    "intro": "起点都是A100、B50。两栏一起经历：扣10 → 加款失败 → 执行回滚。依次按下操作按钮，比较扣款能否撤销。",
+    "limit": "普通InnoDB事务性修改的概念模型，不连接真实MySQL；余额面板表示本次执行看到的值，不模拟其他连接。失败后由你选择回滚，不把报错当成自动整笔回滚。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/commit.html"
+    ]
+  },
+  "d7-boundary": {
+    "kind": "static",
+    "title": "回滚边界，只看扣款是否提交",
+    "intro": "A都是90元；余额相同，不代表撤销状态相同。",
+    "cards": [
+      {
+        "title": "BEGIN → 扣10 → 尚未COMMIT",
+        "text": "ROLLBACK撤销尚未提交的扣款：A恢复100，事务结束。"
+      },
+      {
+        "title": "BEGIN → 扣10 → 已COMMIT",
+        "text": "扣款已经确认：后来ROLLBACK仍是A90。更正已提交扣款需新的操作或恢复方案。"
+      },
+      {
+        "title": "没有BEGIN，成功扣10自动提交",
+        "text": "这条UPDATE已经作为自己的事务提交。后来ROLLBACK仍是A90；没有BEGIN不是没有事务，而是两步没有共用边界。"
+      }
+    ],
+    "limit": "只比较普通InnoDB修改的确认状态；不模拟DDL、连接异常、死锁或具体错误的回滚范围。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/implicit-commit.html"
+    ]
+  },
+  "d7-acid": {
+    "kind": "lab",
+    "model": "acid",
+    "title": "两步都提交，总额为什么还会错",
+    "intro": "两种程序都在同一个事务中COMMIT。只把B的加款从10改成20，直接比较余额与总额。",
+    "limit": "总额不变是本例业务规则，不代表数据库自动理解任意业务；演示未加入金额校验约束。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-acid.html"
+    ]
+  },
+  "d7-failures": {
+    "kind": "static",
+    "title": "SQL执行时，事务状态在哪里",
+    "intro": "本例处于BEGIN后，已扣款但尚未COMMIT；服务层组织命令，InnoDB管理本事务修改。",
+    "cards": [
+      {
+        "title": "同一次执行的两类职责",
+        "text": "执行器在服务层按命令请求修改，InnoDB的事务状态随之变化。不是做完SQL后再经过一个独立“事务站”。",
+        "diagram": {
+          "kind": "graph",
+          "width": 800,
+          "height": 180,
+          "nodes": [
+            {
+              "id": "client",
+              "x": 10,
+              "y": 30,
+              "width": 230,
+              "height": 120,
+              "title": "客户端命令",
+              "lines": [
+                "BEGIN → UPDATE",
+                "成功才COMMIT，失败处理"
+              ]
+            },
+            {
+              "id": "service",
+              "x": 300,
+              "y": 30,
+              "width": 200,
+              "height": 120,
+              "title": "服务层",
+              "lines": [
+                "理解并执行命令",
+                "请求存取记录"
+              ]
+            },
+            {
+              "id": "engine",
+              "x": 560,
+              "y": 30,
+              "width": 230,
+              "height": 120,
+              "title": "InnoDB",
+              "lines": [
+                "余额已暂改",
+                "本事务仍未提交"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "client",
+              "to": "service",
+              "label": "SQL",
+              "from_side": "right",
+              "to_side": "left"
+            },
+            {
+              "from": "service",
+              "to": "engine",
+              "label": "请求修改",
+              "from_side": "right",
+              "to_side": "left"
+            }
+          ],
+          "groups": []
+        }
+      },
+      {
+        "title": "同读10，两次写绝对值9",
+        "text": "A、B各自提交都成功，但最终只扣一件；第二次写回9不是从当前9再减。",
+        "table": {
+          "name": "旧读数写回",
+          "columns": [
+            "顺序",
+            "A",
+            "B",
+            "当前库存"
+          ],
+          "rows": [
+            [
+              "1",
+              "普通SELECT读10",
+              "普通SELECT读10",
+              10
+            ],
+            [
+              "2",
+              "算9，UPDATE写9；COMMIT",
+              "已算好9",
+              9
+            ],
+            [
+              "3",
+              "已结束",
+              "UPDATE仍写9；COMMIT",
+              9
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "问题定位图不把undo、redo、MVCC、锁与ACID机械一一对应；这些机制会协作。外部副作用不自动属于本地事务。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-acid.html"
+    ]
+  },
+  "d8-concurrent": {
+    "kind": "static",
+    "title": "同一次未提交修改，读取依据不同",
+    "intro": "T2都把10暂改0，再回滚；区别只在T1是否读取他人未提交值。",
+    "cards": [
+      {
+        "title": "读取未提交值",
+        "text": "T1的“售罄”判断依赖了一个随后被撤销的值，这才是脏读的风险。",
+        "table": {
+          "name": "两条连接，时间向下",
+          "columns": [
+            "时间",
+            "T2",
+            "T1",
+            "已确认库存"
+          ],
+          "rows": [
+            [
+              "1",
+              "BEGIN；UPDATE改0",
+              "BEGIN",
+              10
+            ],
+            [
+              "2",
+              "尚未提交",
+              "SELECT读0 → 报售罄",
+              10
+            ],
+            [
+              "3",
+              "ROLLBACK恢复10",
+              "判断已依赖0",
+              10
+            ]
+          ]
+        }
+      },
+      {
+        "title": "不读取未提交值",
+        "text": "本例仍读已确认10，不把未确认0当作结果；其他协调方式也可能等待，不统一成一种内部机制。",
+        "table": {
+          "name": "相同修改，换读取规则",
+          "columns": [
+            "时间",
+            "T2",
+            "T1",
+            "已确认库存"
+          ],
+          "rows": [
+            [
+              "1",
+              "BEGIN；UPDATE改0",
+              "BEGIN",
+              10
+            ],
+            [
+              "2",
+              "尚未提交",
+              "SELECT依据已确认10",
+              10
+            ],
+            [
+              "3",
+              "ROLLBACK恢复10",
+              "未依赖0",
+              10
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "以明确允许/禁止未提交读取作对比，不把锁或快照机制强行统一。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html"
+    ]
+  },
+  "d8-repeat": {
+    "kind": "static",
+    "title": "值变化与集合变化",
+    "intro": "T1的两次读取在同一事务内；这里假设第二次读取允许看见他人新提交变化。",
+    "cards": [
+      {
+        "title": "同一行的值变化",
+        "text": "T2已提交，不是脏读；关注同一商品的库存前后不同。",
+        "flow": [
+          "T1：读id=1，stock=10",
+          "T2：把id=1改8并COMMIT",
+          "T1：再读id=1，stock=8"
+        ]
+      },
+      {
+        "title": "同一条件的匹配集合变化",
+        "text": "查询条件price≤5没变，符合条件的商品多了一件。",
+        "flow": [
+          "T1：price≤5 → 商品1、2",
+          "T2：插入商品4、价格4并COMMIT",
+          "T1：price≤5 → 商品1、2、4"
+        ]
+      }
+    ],
+    "limit": "现象时间线允许变化；并未把它冒充InnoDB RR普通快照的实测。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-next-key-locking.html"
+    ]
+  },
+  "d8-levels": {
+    "kind": "static",
+    "title": "经典隔离表与InnoDB实现",
+    "intro": "经典表描述最低保证；具体查询结果还要注明引擎和读法。",
+    "cards": [
+      {
+        "title": "SQL标准经典现象",
+        "text": "“允许”指可能发生，不是每次发生。",
+        "table": {
+          "name": "经典现象表",
+          "columns": [
+            "级别",
+            "脏读",
+            "不可重复读",
+            "幻读"
+          ],
+          "rows": [
+            [
+              "RU",
+              "允许",
+              "允许",
+              "允许"
+            ],
+            [
+              "RC",
+              "禁止",
+              "允许",
+              "允许"
+            ],
+            [
+              "RR",
+              "禁止",
+              "禁止",
+              "允许"
+            ],
+            [
+              "Serializable",
+              "禁止",
+              "禁止",
+              "禁止"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "InnoDB RR的普通读",
+        "text": "保留同一读取视角时，不会因为他人新提交插入而增加可见行；锁定范围访问另有范围保护。不能直接把标准表的“允许幻读”写成MySQL RR所有SELECT的结果。"
+      }
+    ],
+    "limit": "两例均为普通一致性读，无自身写入；不是所有RR操作都读旧快照。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-transaction-isolation-levels.html"
+    ]
+  },
+  "d8-readtypes": {
+    "kind": "lab",
+    "model": "read",
+    "title": "同一时间线，三种读取规则",
+    "intro": "T1的两次读取始终属于同一事务；T2在中间提交库存8。只改变读取规则。",
+    "limit": "每轮固定一个隔离级别，两次读取属于同一事务且无自身写入；不在进行中的事务里切换隔离。内嵌SQL不验证FOR UPDATE与并发。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html"
+    ]
+  },
+  "d9-undo": {
+    "kind": "static",
+    "title": "同一份历史信息的两种用途",
+    "intro": "库存10→8后，历史信息既服务撤销，也服务旧版本重建。",
+    "cards": [
+      {
+        "title": "修改者尚未提交，执行ROLLBACK",
+        "text": "撤销改变当前记录：用undo恢复10，并结束该事务。",
+        "flow": [
+          "当前记录8，T2未提交",
+          "undo含恢复10的依据",
+          "ROLLBACK → 当前记录变10"
+        ]
+      },
+      {
+        "title": "修改者已提交，T1仍用旧视角",
+        "text": "读取只重建结果，不改当前8；新视角仍能读8。",
+        "diagram": {
+          "kind": "graph",
+          "width": 850,
+          "height": 190,
+          "nodes": [
+            {
+              "id": "row",
+              "x": 10,
+              "y": 40,
+              "width": 205,
+              "height": 110,
+              "title": "products当前记录",
+              "lines": [
+                "stock=8，修改者T2",
+                "当前8保持不变"
+              ]
+            },
+            {
+              "id": "undo",
+              "x": 315,
+              "y": 40,
+              "width": 225,
+              "height": 110,
+              "title": "undo历史信息",
+              "lines": [
+                "足以重建先前10",
+                "沿记录的历史关联找到"
+              ]
+            },
+            {
+              "id": "reader",
+              "x": 635,
+              "y": 40,
+              "width": 205,
+              "height": 110,
+              "title": "T1旧视角的结果",
+              "lines": [
+                "重建stock=10",
+                "不是另一条商品行"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "row",
+              "to": "undo",
+              "label": "历史关联",
+              "from_side": "right",
+              "to_side": "left"
+            },
+            {
+              "from": "undo",
+              "to": "reader",
+              "label": "重建旧值",
+              "from_side": "right",
+              "to_side": "left",
+              "active": true
+            }
+          ],
+          "groups": []
+        }
+      }
+    ],
+    "limit": "版本链为逻辑示意；插入undo与更新undo的清理时机并不相同。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-undo-logs.html"
+    ]
+  },
+  "d9-mvcc": {
+    "kind": "lab",
+    "model": "versions",
+    "title": "同一版本链，旧视图与新视图",
+    "intro": "T2先改8未提交，T1首次读取建立旧视图并读10，T2再提交。两栏一直并排，分别检查旧、新视图怎样选择。",
+    "limit": "简化活跃集合与边界判断；只讲普通一致性读，不覆盖所有锁定访问。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-multi-versioning.html"
+    ]
+  },
+  "d9-redo": {
+    "kind": "lab",
+    "model": "recovery",
+    "title": "内存丢失后，还剩什么依据",
+    "intro": "保持内存8、磁盘10和同一次进程崩溃不变，只改变是否已有持久redo。",
+    "limit": "逻辑恢复示意；不提供刷盘参数调优、两阶段提交或断电实验。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-redo-log.html"
+    ]
+  },
+  "d9-consistency": {
+    "kind": "static",
+    "title": "旧值写回，与当前值递减",
+    "intro": "两个事务都要扣一件；不比较SQL是否报语法错，而比较实际扣减次数。",
+    "cards": [
+      {
+        "title": "先读10，各自算9",
+        "text": "两次赋绝对值9，后一次没有表达再减一次。",
+        "flow": [
+          "A、B普通读取：都得到10",
+          "A写stock=9 → COMMIT",
+          "B写stock=9 → COMMIT",
+          "最终9：只扣1件"
+        ]
+      },
+      {
+        "title": "直接表达条件递减",
+        "text": "两次执行SET stock=stock-1 WHERE stock>0的条件更新；同一行写入受锁协调，第二次从当前9减到8。",
+        "flow": [
+          "起点10",
+          "A条件递减：10→9，提交",
+          "B条件递减：9→8，提交",
+          "最终8：扣2件"
+        ]
+      },
+      {
+        "title": "库存已为0",
+        "text": "WHERE stock>0不匹配，影响0行；程序必须拒绝继续购买。",
+        "table": {
+          "name": "条件更新结果",
+          "columns": [
+            "原库存",
+            "影响行数",
+            "后库存"
+          ],
+          "rows": [
+            [
+              0,
+              0,
+              0
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "普通InnoDB条件UPDATE的逻辑对照，第二事务按当前可修改记录求值；不是SQLite并发实测，也不替代多步骤业务的锁或版本策略。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/binary-log.html"
+    ]
+  },
+  "d10-locks": {
+    "kind": "static",
+    "title": "锁冲突：资源与模式",
+    "intro": "下面只比较不同事务已定位的同一条记录，不包含间隙锁等其他资源。",
+    "cards": [
+      {
+        "title": "持有、申请、等待、释放",
+        "text": "A、B都在显式事务中。下图是第2步：A仍持S，B的UPDATE等X。A结束释放后，B才取得锁继续。",
+        "diagram": {
+          "kind": "graph",
+          "width": 800,
+          "height": 175,
+          "nodes": [
+            {
+              "id": "A",
+              "x": 10,
+              "y": 25,
+              "width": 230,
+              "height": 120,
+              "title": "事务A",
+              "lines": [
+                "FOR SHARE已执行",
+                "持有商品1的S"
+              ]
+            },
+            {
+              "id": "row",
+              "x": 325,
+              "y": 25,
+              "width": 150,
+              "height": 120,
+              "title": "商品1索引记录",
+              "lines": [
+                "id=1",
+                "仍被A保护"
+              ]
+            },
+            {
+              "id": "B",
+              "x": 560,
+              "y": 25,
+              "width": 230,
+              "height": 120,
+              "title": "事务B",
+              "lines": [
+                "UPDATE申请X",
+                "尚未取得：等待"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "A",
+              "to": "row",
+              "label": "持有S",
+              "from_side": "right",
+              "to_side": "left"
+            },
+            {
+              "from": "B",
+              "to": "row",
+              "label": "申请X：等待",
+              "from_side": "left",
+              "to_side": "right",
+              "active": true
+            }
+          ],
+          "groups": []
+        },
+        "table": {
+          "name": "锁生命周期，时间向下",
+          "columns": [
+            "步骤",
+            "A的SQL/状态",
+            "B的SQL/状态",
+            "商品1的锁"
+          ],
+          "rows": [
+            [
+              "1",
+              "BEGIN；SELECT…FOR SHARE",
+              "BEGIN",
+              "A持S"
+            ],
+            [
+              "2",
+              "事务仍进行",
+              "UPDATE请求X → 等待",
+              "A持S；B未取得X"
+            ],
+            [
+              "3",
+              "COMMIT或ROLLBACK",
+              "等待结束",
+              "A释放S"
+            ],
+            [
+              "4",
+              "已结束",
+              "取得X；UPDATE继续",
+              "B持X"
+            ],
+            [
+              "5",
+              "已结束",
+              "COMMIT或ROLLBACK",
+              "B释放X"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "兼容关系与不同记录",
+        "text": "普通MVCC SELECT不自动对应S。A锁商品1本身不会阻止B锁商品2，实际还需检查其他索引、范围和约束。",
+        "table": {
+          "name": "其他事务已持有 → 新请求",
+          "columns": [
+            "同一记录已持有",
+            "请求S",
+            "请求X"
+          ],
+          "rows": [
+            [
+              "S",
+              "兼容：两方可读",
+              "冲突：等待或失败"
+            ],
+            [
+              "X",
+              "冲突：等待或失败",
+              "冲突：等待或失败"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "锁模式与粒度为概念对照；未在SQLite中模拟记录锁。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking.html"
+    ]
+  },
+  "d10-ranges": {
+    "kind": "lab",
+    "model": "range",
+    "title": "查询要保护一行，还是一个范围",
+    "intro": "索引已有10、20。比较按唯一id查20与锁定(10,20]范围：插入15分别会改变什么？",
+    "limit": "锁区间是显式假设，不由四行数据推出所有真实访问的边界。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-next-key-locking.html"
+    ]
+  },
+  "d10-deadlock": {
+    "kind": "lab",
+    "model": "deadlock",
+    "title": "从持锁资源画出等待关系",
+    "intro": "A、B都需要记录1和2。改变访问顺序，观察等待边能否闭合成环。",
+    "limit": "两记录时间线为概念图；内嵌练习不做并发锁或死锁实验。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks.html"
+    ]
+  },
+  "d10-optimistic": {
+    "kind": "static",
+    "title": "等待冲突，或在更新时发现旧版本",
+    "intro": "两种策略都要处理冲突，乐观方式的实际UPDATE仍使用数据库写锁。",
+    "cards": [
+      {
+        "title": "悲观：先锁再处理",
+        "text": "A先FOR UPDATE取得所需锁；B请求不兼容锁时等待，等A结束后再处理当前值。",
+        "flow": [
+          "A持锁读取库存10",
+          "B修改同一资源 → 等待",
+          "A修改并结束 → B继续"
+        ]
+      },
+      {
+        "title": "乐观：版本条件检查",
+        "text": "A、B都读到version=1；A成功推进到2。B仍WHERE version=1，因此影响0行，不能忽略。",
+        "flow": [
+          "A、B：读取stock=10, version=1",
+          "A：版本匹配 → stock=9, version=2",
+          "B：旧version=1不匹配 → 影响0行",
+          "B重新读取、重试或报告冲突"
+        ]
+      }
+    ],
+    "limit": "version策略是应用设计例子；需所有相应写入遵守版本协议。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html"
+    ]
+  },
+  "d11-joins": {
+    "kind": "lab",
+    "model": "join",
+    "title": "一件商品能产生几行结果",
+    "intro": "3件商品、3个订单。商品1有两单，商品3无订单；按同一个ON条件配对。",
+    "limit": "仅示意行配对；NULL字符串在机制图中表示缺失结果，SQL结果表使用真实NULL。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/join.html"
+    ]
+  },
+  "d11-self": {
+    "kind": "static",
+    "title": "同表两种角色，与全部规格组合",
+    "intro": "从输入和配对规则推出结果，而不是直接给出一张结果表。",
+    "cards": [
+      {
+        "title": "员工e与经理m：同一employees表",
+        "text": "原表两行是小李(1,经理2)、小王(2,无经理)。e.manager_id=m.id；用LEFT保留没有经理的小王。下面明确标出两种角色与每行结果。",
+        "table": {
+          "name": "同表两角色的配对结果",
+          "columns": [
+            "员工 e",
+            "e.manager_id",
+            "经理 m（按m.id匹配）",
+            "结果的含义"
+          ],
+          "rows": [
+            [
+              "id1 小李",
+              2,
+              "id2 小王",
+              "小李的经理是小王"
+            ],
+            [
+              "id2 小王",
+              null,
+              "NULL：无经理匹配",
+              "保留小王，经理列空"
+            ]
+          ]
+        },
+        "flow": [
+          "员工小李：manager_id=2 → 经理m.id=2小王",
+          "员工小王：manager_id=NULL → 无匹配，LEFT补NULL"
+        ]
+      },
+      {
+        "title": "颜色与尺寸全部组合",
+        "text": "输入颜色红、蓝，尺寸S、M；每个颜色与每个尺寸配对，共2×2=4行。",
+        "table": {
+          "name": "组合结果",
+          "columns": [
+            "颜色",
+            "尺寸"
+          ],
+          "rows": [
+            [
+              "红",
+              "S"
+            ],
+            [
+              "红",
+              "M"
+            ],
+            [
+              "蓝",
+              "S"
+            ],
+            [
+              "蓝",
+              "M"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "员工与规格图只是理解两种角色与全组合，不增加复杂练习数据。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/join.html"
+    ]
+  },
+  "d11-views": {
+    "kind": "static",
+    "title": "基表改变，下一次视图读取怎样变",
+    "intro": "各阶段使用能看见相应已提交状态的读取视角；普通视图没有单独固定结果。",
+    "cards": [
+      {
+        "title": "筛选视图stock>0",
+        "text": "起点id1库存10、id2库存0，只有id1入选。将id2改3并提交，重新查询得到两行。",
+        "table": {
+          "name": "基表与视图前后",
+          "columns": [
+            "阶段",
+            "基表库存",
+            "视图id"
+          ],
+          "rows": [
+            [
+              "修改前",
+              "id1=10，id2=0",
+              "1"
+            ],
+            [
+              "修改并提交",
+              "id1=10，id2=3",
+              "尚未重新查询"
+            ],
+            [
+              "重新查询",
+              "id1=10，id2=3",
+              "1、2"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "聚合视图COUNT(*)",
+        "text": "基表有商品(id1,水)、(id4,水)，分组计数为(水,2)。把计数改3，无法唯一对应新增哪条商品记录。",
+        "table": {
+          "name": "更新映射",
+          "columns": [
+            "当前结果",
+            "拟改结果",
+            "缺少信息"
+          ],
+          "rows": [
+            [
+              "水，2",
+              "水，3",
+              "新增商品的id与其他列"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "MySQL普通视图与更新规则为理论；SQLite练习只查询预建视图，不验证更新视图。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/view-updatability.html"
+    ]
+  },
+  "d11-cursor": {
+    "kind": "static",
+    "title": "集合表达与逐行过程",
+    "intro": "库存10、2，若只求总和，用SUM即可；需要特殊逐行过程时才考虑游标。",
+    "cards": [
+      {
+        "title": "集合求和",
+        "text": "一条SQL表达整组的统计，得到12，无需自己控制取行。",
+        "flow": [
+          "SELECT SUM(stock)",
+          "数据库对结果集合求和",
+          "得到12"
+        ]
+      },
+      {
+        "title": "取值后交给单件核对过程",
+        "text": "假设已有核对过程以5件为目标，一件处理完再取下一件。FETCH只取值，补货需求由后续过程判断，不会自动改变商品库存。",
+        "table": {
+          "name": "逐行处理的实际输入与后果",
+          "columns": [
+            "步骤",
+            "取得的行",
+            "后续处理",
+            "输出"
+          ],
+          "rows": [
+            [
+              "OPEN",
+              "结果为id1/10、id4/2",
+              "尚未取行",
+              "无"
+            ],
+            [
+              "第一次FETCH",
+              "id1，stock10",
+              "核对目标5：10已足够",
+              "id1无需补货"
+            ],
+            [
+              "第二次FETCH",
+              "id4，stock2",
+              "核对目标5：5-2=3",
+              "id4缺3件"
+            ],
+            [
+              "再次FETCH",
+              "没有下一行",
+              "处理结束并CLOSE",
+              "不再调用核对"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "图示只表示OPEN、FETCH、CLOSE的读取过程，不是在执行真实MySQL存储程序。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/cursors.html"
+    ]
+  },
+  "d12-diagnose": {
+    "kind": "lab",
+    "model": "diagnose",
+    "title": "证据足够做决定吗",
+    "intro": "区分大量扫描、锁等待、旧值与证据不足。小表扫描并不自动意味着缺索引。",
+    "limit": "数值是粗估或假设，不给出固定分表阈值；并非真实线上诊断。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/optimization.html"
+    ]
+  },
+  "d12-vertical": {
+    "kind": "static",
+    "title": "同四件商品，核心行变窄后怎样取页",
+    "intro": "固定每页容量8格，整行4格、核心行2格；格只是容量单位，不是实际字节。假设长描述计入本例行宽，比较读取全部四件的核心信息。",
+    "cards": [
+      {
+        "title": "拆分前：核心与长描述同放",
+        "text": "一页只能放两条4格整行，四件商品分两页。即使SELECT不返回description，存储行仍带这些信息。",
+        "diagram": {
+          "kind": "graph",
+          "width": 760,
+          "height": 190,
+          "nodes": [
+            {
+              "id": "P1",
+              "x": 10,
+              "y": 20,
+              "width": 345,
+              "height": 155,
+              "title": "商品页P1：8格",
+              "lines": [
+                "商品1：核心2格+描述2格",
+                "商品2：核心2格+描述2格",
+                "读列表仍访问这些整行"
+              ]
+            },
+            {
+              "id": "P2",
+              "x": 405,
+              "y": 20,
+              "width": 345,
+              "height": 155,
+              "title": "商品页P2：8格",
+              "lines": [
+                "商品3：核心2格+描述2格",
+                "商品4：核心2格+描述2格",
+                "四件核心信息需访问两页"
+              ]
+            }
+          ],
+          "edges": [],
+          "groups": []
+        }
+      },
+      {
+        "title": "拆分后：核心四行同页，详情另存",
+        "text": "四条2格核心行可以装入同一8格页。列表只访问核心页；完整详情要按id另取描述，商品数与同步责任没有消失。",
+        "diagram": {
+          "kind": "graph",
+          "width": 760,
+          "height": 210,
+          "nodes": [
+            {
+              "id": "core",
+              "x": 10,
+              "y": 20,
+              "width": 310,
+              "height": 175,
+              "title": "核心商品页：8格",
+              "lines": [
+                "商品1核心2格；商品2核心2格",
+                "商品3核心2格；商品4核心2格",
+                "列表读取：一页"
+              ]
+            },
+            {
+              "id": "details",
+              "x": 450,
+              "y": 20,
+              "width": 300,
+              "height": 175,
+              "title": "product_details",
+              "lines": [
+                "id1 → 描述1；id2 → 描述2",
+                "id3 → 描述3；id4 → 描述4",
+                "完整详情才按相同id关联"
+              ]
+            }
+          ],
+          "edges": [
+            {
+              "from": "core",
+              "to": "details",
+              "label": "完整详情：按id再取",
+              "from_side": "right",
+              "to_side": "left",
+              "active": true
+            }
+          ],
+          "groups": []
+        }
+      }
+    ],
+    "limit": "固定容量的教学模型，假设长字段计入行宽；真实InnoDB可能页外存储长值，收益还取决于访问路径与实际测量，不由少选列直接推断读盘次数。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/optimizing-innodb-diskio.html"
+    ]
+  },
+  "d12-horizontal": {
+    "kind": "lab",
+    "model": "shard",
+    "title": "局部查询与全局统计",
+    "intro": "四行数据按user_id奇偶分到两片。改变查询范围，查看路由和合并工作。",
+    "limit": "用户奇偶仅用于说明路由；并非推荐真实分片策略。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/partitioning-overview.html"
+    ]
+  },
+  "d12-scaling": {
+    "kind": "static",
+    "title": "主库先改，副本与缓存何时跟上",
+    "intro": "名称从水改为饮用水；把提交后尚未同步与同步完成明确分开。",
+    "cards": [
+      {
+        "title": "复制副本的时间线",
+        "text": "主库提交不保证副本立即应用。要求读到刚写结果时，本例应按策略读主库。",
+        "table": {
+          "name": "相同名称的两份数据",
+          "columns": [
+            "阶段",
+            "主库",
+            "副本"
+          ],
+          "rows": [
+            [
+              "写入前",
+              "水",
+              "水"
+            ],
+            [
+              "主库提交，副本未应用",
+              "饮用水",
+              "水"
+            ],
+            [
+              "复制应用后",
+              "饮用水",
+              "饮用水"
+            ]
+          ]
+        }
+      },
+      {
+        "title": "缓存的时间线",
+        "text": "缓存尚未失效时仍提供旧名；失效后回源读取数据库，再填入新名。",
+        "table": {
+          "name": "写入、失效、刷新",
+          "columns": [
+            "阶段",
+            "数据库",
+            "缓存"
+          ],
+          "rows": [
+            [
+              "写入前",
+              "水",
+              "水"
+            ],
+            [
+              "数据库提交，缓存未失效",
+              "饮用水",
+              "水"
+            ],
+            [
+              "失效并回源刷新后",
+              "饮用水",
+              "饮用水"
+            ]
+          ]
+        }
+      }
+    ],
+    "limit": "按已给定先后展示复制与缓存同步；不是完整强一致协议，并发更新和失败需另行设计。",
+    "references": [
+      "https://dev.mysql.com/doc/refman/8.4/en/replication.html"
+    ]
+  }
+}

@@ -1,0 +1,6 @@
+.DS_Store
+.local/
+__pycache__/
+node_modules/
+mysql-course-*.json
+mysql-course-day-*-handoff.md

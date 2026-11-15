@@ -1,0 +1,140 @@
+<section class="card lesson-goals">
+  <h2>本课的三个问题</h2>
+  <ol class="objectives"><li>怎样让数据库拒绝重复编号、缺失名称等不合法数据？</li><li>三大范式分别解决哪一类表设计问题？</li><li>删除几行、清空数据和删除整张表，有什么区别？</li></ol>
+  <div class="day-source-links" data-day-sources></div>
+</section>
+
+<section class="lesson-section" id="d2-warmup" data-phase="recall">
+  <div class="section-heading"><h2><span class="section-number">01</span>回忆检查</h2></div>
+  <p>不查正文，回想第1天的三个概念。</p>
+  <div class="warmup-grid">
+    <div><strong>主键</strong><select data-save="d2-warm-key" aria-label="主键的熟悉程度"><option value="">请选择</option><option>需要重看</option><option>记得部分</option><option>能举例解释</option></select></div>
+    <div><strong>候选键</strong><select data-save="d2-warm-candidate" aria-label="候选键的熟悉程度"><option value="">请选择</option><option>需要重看</option><option>记得部分</option><option>能举例解释</option></select></div>
+    <div><strong>WHERE</strong><select data-save="d2-warm-where" aria-label="WHERE的熟悉程度"><option value="">请选择</option><option>需要重看</option><option>记得部分</option><option>能举例解释</option></select></div>
+  </div>
+  <label class="inline-label" for="d2-warm-answer">两件商品都叫“水”，只查编号1的商品，你会用哪一列筛选？为什么？</label>
+  <textarea id="d2-warm-answer" data-save="d2-warm-answer" rows="3" maxlength="20000" placeholder="写一句解释，也可以附上SELECT语句。"></textarea>
+</section>
+
+<section class="lesson-section lesson-main" id="d2-main" data-phase="main">
+  <div class="section-heading"><h2><span class="section-number">02</span>今日主线</h2></div>
+
+  <article class="topic" id="d2-constraints" data-sources="" data-topic="字段类型、约束与建表" data-references="https://www.w3schools.com/mysql/mysql_create_table.asp">
+    <div class="topic-heading"><span class="topic-number">01</span><h3>字段类型、约束与建表</h3><button class="topic-note-button" data-note="d2-constraints" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <p>字段类型规定一列保存哪类值，例如整数或字符串；<strong>约束是数据库检查数据必须满足的规则</strong>。只有<code>INT</code>类型，还不能表达“商品编号不重复”或“库存不能小于0”。这些要求要另外声明。</p>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>常见规则</th><th>含义</th><th>小例子</th></tr></thead><tbody>
+      <tr><td><code>NOT NULL</code></td><td>不允许缺少值。NULL表示没有已知值，不是0或空字符串。</td><td>商品名称必须提供。</td></tr>
+      <tr><td><code>UNIQUE</code></td><td>不允许重复的非NULL键值。</td><td>商品条码不能重复。</td></tr>
+      <tr><td><code>PRIMARY KEY</code></td><td>选定用于识别行的键，值唯一且非NULL。</td><td>每件商品有独立编号。</td></tr>
+      <tr><td><code>FOREIGN KEY</code></td><td>按声明的规则检查引用关系。</td><td>订单引用的商品编号必须存在。</td></tr>
+      <tr><td><code>CHECK</code></td><td>检查指定条件；MySQL中条件为FALSE（不成立）时拒绝写入。</td><td>要求库存不小于0。</td></tr>
+    </tbody></table></div>
+    <h4>一张表的定义</h4>
+    <p><code>CREATE TABLE</code>创建表，括号内用逗号分隔列定义和表级规则：</p>
+    <pre><code>CREATE TABLE products (
+  id INT PRIMARY KEY,
+  name VARCHAR(20) NOT NULL,
+  price INT NOT NULL,
+  stock INT NOT NULL CHECK (stock &gt;= 0)
+) ENGINE = InnoDB;</code></pre>
+    <p>这里用整数价格简化数据；真实金额通常会考虑<code>DECIMAL</code>等合适类型。<code>ENGINE = InnoDB</code>指定负责存取数据的存储引擎，内部机制留到后续课程。建表成功时只有定义，商品记录仍需插入。</p>
+    <!-- EXAMPLE:d2-constraints -->
+    <h4>规则各管一件事</h4>
+    <p><code>NOT NULL</code>不保证名称不是空字符串；MySQL的<code>UNIQUE</code>允许可空列出现多个NULL。<code>CHECK (stock &gt;= 0)</code>遇到NULL不算FALSE，所以需要和<code>NOT NULL</code>配合。普通插入违反这里的主键或必填规则会报错，不会自动替你修正。</p>
+    <p>约束检查“这条数据是否合规”；范式检查“这些信息放在同一张表是否合适”。即使每个编号都合法，表的组织方式仍可能造成重复维护。</p>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d2-constraints"></div><button class="text-button" data-feedback="d2-constraints">这里还没懂</button></div>
+  </article>
+
+  <article class="topic" id="d2-1nf" data-sources="28" data-topic="第一范式与单值字段">
+    <div class="topic-heading"><span class="topic-number">02</span><h3>第一范式：一个字段表达一个值</h3><button class="topic-note-button" data-note="d2-1nf" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <p><strong>范式是关系表设计应满足的一组条件</strong>。三大范式逐层增加要求：1NF检查一个字段是否塞进多个需要分别处理的值；2NF检查某项信息是否只由组合键的一部分确定；3NF检查某项信息是否通过另一项非键信息间接确定。</p>
+    <p><strong>第一范式（1NF）要求每个字段取一个原子值，而不是一组需要分别处理的值。</strong>“原子”表示在当前数据模型中作为一个整体使用，不是说文字不能再拆成字符。</p>
+    <p>例如，订单101买了商品1和2，把<code>product_ids</code>写成<code>1,2</code>，查询“谁买了商品2”就需要拆清单。改成订单明细，每行保存一个订单编号和一个商品编号，就能直接用<code>WHERE product_id = 2</code>筛选。</p>
+    <!-- EXAMPLE:d2-1nf -->
+    <p>同一个订单编号出现在多行不违反1NF：这里一行代表一条订单明细，而不是整个订单。商品名称“牛奶”作为一个名称使用也不需要拆字。<strong>不能只凭“没有重复列名”判断1NF，也不能因为MySQL允许保存JSON，就说它不是关系型数据库。</strong></p>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d2-1nf"></div><button class="text-button" data-feedback="d2-1nf">这里还没懂</button></div>
+  </article>
+
+  <article class="topic" id="d2-2nf" data-sources="" data-related-sources="28,29" data-topic="函数依赖与第二范式">
+    <div class="topic-heading"><span class="topic-number">03</span><h3>第二范式：信息要依赖整个键</h3><button class="topic-note-button" data-note="d2-2nf" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <p><strong>函数依赖</strong>描述列之间的确定关系：按业务规则，确定A的值，就能确定B的值，写作<code>A → B</code>。例如，每个商品编号对应一个当前名称，因此<code>product_id → product_name</code>。名称可能重复，所以反过来未必成立。这是设计规则，不是从几行样本的巧合推断出来的。</p>
+    <p>订单明细约定：同一订单中，同一商品最多一行。只有同时知道<code>order_id</code>和<code>product_id</code>，才能确定购买数量<code>quantity</code>。两列一起组成候选键；单独一列都不能识别明细，这称为<strong>组合键</strong>。不属于任何候选键的列，称为<strong>非主属性</strong>。</p>
+    <p>在这个设计中，数量依赖整个组合键，是<strong>完全依赖</strong>；商品名称只依赖其中的商品编号，是<strong>部分依赖</strong>。如果每条明细都再写一次商品名称，名称修改就要更新多行；漏改一行，商品1就会同时叫“水”和“饮用水”。</p>
+    <p><strong>第二范式（2NF）在满足1NF的基础上，要求每个非主属性都完全依赖每一个候选键，没有部分依赖。</strong>本例只有一个候选键，部分依赖就是“只需要组合键的一部分，就能确定该列”。</p>
+    <!-- EXAMPLE:d2-2nf -->
+    <p>拆成<code>products(product_id, product_name)</code>与<code>order_items(order_id, product_id, quantity)</code>后，名称按商品编号维护一份，数量仍属于具体明细。两表保留<code>product_id</code>，之后可据此关联，不是把联系丢掉。</p>
+    <p class="micro">若所有候选键都只有一列，就不会有这里的部分依赖。只看“主键是一列”不够，还要考虑其他候选键；增加一个自增编号也不自动消除已有的业务依赖。</p>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d2-2nf"></div><button class="text-button" data-feedback="d2-2nf">这里还没懂</button></div>
+  </article>
+
+  <article class="topic" id="d2-3nf" data-sources="29" data-topic="第三范式与重复维护">
+    <div class="topic-heading"><span class="topic-number">04</span><h3>第三范式：类别名称属于类别</h3><button class="topic-note-button" data-note="d2-3nf" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <p>商品表每行都有唯一商品编号，却仍可能重复记录类别名称。约定每件商品属于一个类别，每个类别编号对应一个名称：<code>product_id → category_id</code>，并且<code>category_id → category_name</code>。于是商品编号通过类别编号间接确定类别名称，这叫<strong>传递依赖</strong>。类别编号不能识别商品，不是商品表的键。</p>
+    <p><strong>第三范式（3NF）在满足2NF的基础上，排除非主属性对候选键的不合适传递依赖。</strong>在本例中，类别编号与类别名称都是非主属性，类别名称依赖的不是商品本身，而是它所属的类别。</p>
+    <p>这会产生三种常见的<strong>数据维护异常</strong>，即信息难以独立、正确地修改：</p>
+    <ul><li><strong>更新异常：</strong>“饮品”改名为“饮料”，必须修改该类别的每一件商品，漏改会不一致。</li><li><strong>插入异常：</strong>想记录一个尚无商品的新类别，却必须先凑出一条商品记录。</li><li><strong>删除异常：</strong>删除该类别的最后一件商品，也把唯一的类别信息一起删掉。</li></ul>
+    <!-- EXAMPLE:d2-3nf -->
+    <p>把类别名称移到<code>categories(category_id, category_name)</code>，商品表只保存类别编号，就能独立维护类别。关联需要的编号仍保留；拆表的目的不是让列数尽量少，而是让事实放在合适的位置。</p>
+    <details><summary>3NF的更一般判定</summary><p>对于一条非平凡函数依赖<code>X → A</code>，即A尚未包含在X中，3NF要求X是超键，或者A属于某个候选键。这里的类别编号不是超键，类别名称也不属于任何候选键，因此违反3NF。这条判定避免把复杂的多候选键情况简化成“所有列只能依赖主键”。</p></details>
+    <h4>三大范式解决的是三种问题</h4>
+    <p>1NF不把多个商品编号塞进一个字段；2NF不把商品名称附在每条组合键明细上；3NF不把类别名称附在每件商品上。<strong>减少重复维护不等于完全没有重复值，也不保证查询一定更快。</strong>拆表后可能需要关联查询；为了性能保留冗余时，也必须设计好一致性维护方式，不能单凭“表越多越规范”作决定。</p>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d2-3nf"></div><button class="text-button" data-feedback="d2-3nf">这里还没懂</button></div>
+  </article>
+
+  <article class="topic" id="d2-delete" data-sources="8" data-topic="DELETE、TRUNCATE与DROP">
+    <div class="topic-heading"><span class="topic-number">05</span><h3>删几行、清空数据、删除表</h3><button class="topic-note-button" data-note="d2-delete" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <p><strong>表结构</strong>是表名、列和约束等定义；<strong>表数据</strong>是其中的记录。删除商品1、清空全部商品、不要商品表了，是不同的要求。</p>
+    <div class="table-wrap"><table class="data-table"><thead><tr><th>操作</th><th>数据与结构</th><th>能否筛选行</th><th>MySQL/InnoDB中的回滚</th></tr></thead><tbody>
+      <tr><td><code>DELETE FROM products WHERE id = 1;</code></td><td>删除符合条件的行，保留表结构。</td><td>可以用WHERE；省略就删所有行。</td><td>未提交的事务内可以回滚。</td></tr>
+      <tr><td><code>TRUNCATE TABLE products;</code></td><td>清空全表，保留可用的表定义；重置自增计数。</td><td>不能加WHERE。</td><td>引起隐式提交，不能用用户ROLLBACK撤销。</td></tr>
+      <tr><td><code>DROP TABLE products;</code></td><td>删除表定义和数据，表不存在了。</td><td>不是按行删除。</td><td>普通表的删除引起隐式提交，不能用用户ROLLBACK撤销。</td></tr>
+    </tbody></table></div>
+    <p><strong>自增编号</strong>由数据库按计数生成，MySQL用<code>AUTO_INCREMENT</code>声明；它不是“删除一行就重新编号”。上面的建表示例没有声明自增，插入时需要自己提供id。</p>
+    <p><strong>事务</strong>是一组按整体管理提交或撤销的操作；<code>COMMIT</code>提交，<code>ROLLBACK</code>撤销尚未提交的修改。MySQL默认开启自动提交：一条成功的DELETE通常已自动提交，之后再写ROLLBACK也不会把它找回来。</p>
+    <p><strong>隐式提交</strong>表示语句本身会触发提交，不需要你另外写COMMIT。DELETE属于操作数据的<strong>DML</strong>；TRUNCATE和DROP属于操作定义的<strong>DDL</strong>。这些简称用于区分操作性质，不是“危险程度排行榜”。</p>
+    <!-- EXAMPLE:d2-delete -->
+    <p>TRUNCATE通常比逐行删除更适合快速清空大表，但外键引用等条件可能使它不能执行；它不触发DELETE触发器，即预先定义的删除响应动作。不能背成“任何时候都更快”或“完全没有日志”。DELETE也不保证重置自增编号。<strong>需要删部分记录，就明确写WHERE；需要撤销机会，还要在事务提交前处理。</strong></p>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d2-delete"></div><button class="text-button" data-feedback="d2-delete">这里还没懂</button></div>
+  </article>
+</section>
+
+<section class="lesson-section lesson-practice" id="d2-practice" data-phase="sql">
+  <div class="section-heading"><h2><span class="section-number">03</span>SQL短练习</h2></div>
+  <article class="topic" id="d2-sql" data-sources="" data-topic="INSERT、UPDATE与DELETE短练习" data-references="https://www.w3schools.com/mysql/mysql_insert.asp|https://www.w3schools.com/mysql/mysql_update.asp|https://www.w3schools.com/mysql/mysql_delete.asp">
+    <div class="topic-heading"><h3>增加一行，修改值，删除一行</h3><button class="topic-note-button" data-note="d2-sql" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <div class="sql-syntax"><pre><code>INSERT INTO products (id, name, price, stock)
+VALUES (5, '茶', 6, 3);</code></pre><p><code>INSERT INTO</code>指定表和列，<code>VALUES</code>提供对应的值。列与值按位置一一对应；字符串用单引号。明确列清单，不依赖记住表的物理列顺序。</p>
+    <pre><code>UPDATE products SET stock = 7 WHERE id = 2;</code></pre><p><code>UPDATE</code>指定要改的表，<code>SET</code>指定新值，<code>WHERE</code>限定目标行。没有WHERE时会修改所有行；改多列时用逗号分隔，如<code>SET price = 6, stock = 7</code>。</p>
+    <pre><code>DELETE FROM products WHERE id = 3;</code></pre><p><code>DELETE FROM</code>删除符合条件的整行，不是把某一列变空。日常操作可先用相同WHERE条件做SELECT，确认目标记录，再执行修改或删除；这不能替代事务与并发控制。</p></div>
+    <div class="callout"><strong>练习使用SQLite，不连接真实业务数据。</strong><p>四题各自从下方四行数据开始，每次运行自动恢复，不需要连续完成多条语句。增删改成功后显示整张表，方便检查有没有误改其他商品。这里只练通用语法，不实验MySQL的TRUNCATE、隐式提交、外键或存储引擎。</p></div>
+    <!-- SQL_PRACTICE:2 -->
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d2-sql"></div><button class="text-button" data-feedback="d2-sql">这里还没懂</button></div>
+  </article>
+</section>
+
+<section class="lesson-section" id="d2-quiz" data-phase="quiz">
+  <div class="section-heading"><h2><span class="section-number">04</span>理解自测</h2></div>
+  <p>用自己的话回答，再对照参考解释。</p>
+  <article class="question" data-quiz="d2-q1"><h3>1 / id写了INT，是否就能保证编号不重复？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>不能。INT规定类型，PRIMARY KEY或适当的唯一约束才检查唯一性。主键还要求非NULL；名称的NOT NULL也只是禁止缺失值，不是禁止空字符串。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d2-q2"><h3>2 / 商品编号清单“1,2”和商品名称“牛奶”，为什么不需要同样拆开？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>编号1、2需要分别筛选和引用，是两个需要独立处理的值，应放到明细行。名称作为一个整体使用，不需要拆成字符。1NF的原子性取决于模型中的使用方式，不是文字能否再拆字。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d2-q3"><h3>3 / 明细的候选键是(order_id, product_id)，商品名称和购买数量分别依赖什么？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>按本课业务约定，名称只依赖product_id，是对组合候选键的部分依赖；数量要由整个组合键确定。把当前商品名称移到商品表，明细保留商品编号和数量，就消除了这处2NF问题。依赖依据业务规则，不靠样本碰巧唯一。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d2-q4"><h3>4 / 商品表已有单列主键，为什么类别名称仍可能需要移到类别表？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>商品编号确定类别编号，类别编号又确定类别名称，形成不合适的传递依赖。类别名称重复维护会造成更新、插入和删除异常。类别表独立保存编号与名称，商品表保留类别编号供关联；单列主键不等于满足3NF。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d2-q5"><h3>5 / DELETE、TRUNCATE、DROP能互换吗？DELETE执行后一定能回滚吗？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>不能互换：DELETE删行并保留表，TRUNCATE清空全表并重置自增计数，DROP删除普通表的定义和数据。MySQL/InnoDB中，DELETE需要处于尚未提交的事务内才有回滚机会；默认自动提交后不能再撤销。TRUNCATE和普通表DROP会隐式提交，不能用用户ROLLBACK撤销。</p></div></details><div class="quiz-rating"></div></article>
+  <p id="quiz-summary" class="notice" hidden></p>
+</section>
+
+<section class="lesson-section" id="d2-close" data-phase="close">
+  <div class="section-heading"><h2><span class="section-number">05</span>收尾记录</h2></div>
+  <p>不看正文，检查自己能否解释这三件事。</p>
+  <div class="checklist"><label><input type="checkbox" data-save="d2-exit-constraints">区分字段类型与约束，解释主键、必填与条件检查。</label><label><input type="checkbox" data-save="d2-exit-normal">用小例子区分单值字段、部分依赖和传递依赖。</label><label><input type="checkbox" data-save="d2-exit-delete">区分删行、清空数据与删表，说明WHERE与回滚条件。</label></div>
+  <label class="inline-label" for="d2-exit-note">今天最清楚的一点，以及仍卡住的一点</label><textarea id="d2-exit-note" data-save="d2-exit-note" rows="3" maxlength="20000" placeholder="例如：我能分清部分依赖和传递依赖；但还不明白……"></textarea>
+  <div class="close-actions"><button id="mark-complete" class="primary">标记本日完成</button><button data-feedback="d2-close">整理本日反馈</button><div id="next-lesson"></div></div><p id="completion-note" class="completion-note"></p>
+</section>
+
+<details class="source-map lesson-sources"><summary>网站知识点与参考资料</summary><div data-day-references></div><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/create-table.html" target="_blank" rel="noopener noreferrer">MySQL官方：建表、类型与约束</a></li><li><a href="https://www.db-book.com/slides-dir/PDF-dir/ch7.pdf" target="_blank" rel="noopener noreferrer">Database System Concepts：函数依赖与范式</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html" target="_blank" rel="noopener noreferrer">MySQL官方：TRUNCATE</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/delete.html" target="_blank" rel="noopener noreferrer">MySQL官方：DELETE</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/drop-table.html" target="_blank" rel="noopener noreferrer">MySQL官方：DROP TABLE</a></li></ul></details>

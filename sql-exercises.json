@@ -1,0 +1,1862 @@
+{
+  "engine": "SQLite 3.49.1 · sql.js 1.13.0",
+  "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER NOT NULL); INSERT INTO products VALUES (1,'水',3,10),(2,'面包',5,6),(3,'牛奶',8,0),(4,'水',4,2);",
+  "table": {
+    "name": "products",
+    "columns": [
+      "id",
+      "name",
+      "price",
+      "stock"
+    ],
+    "rows": [
+      [
+        1,
+        "水",
+        3,
+        10
+      ],
+      [
+        2,
+        "面包",
+        5,
+        6
+      ],
+      [
+        3,
+        "牛奶",
+        8,
+        0
+      ],
+      [
+        4,
+        "水",
+        4,
+        2
+      ]
+    ]
+  },
+  "days": {
+    "1": [
+      {
+        "id": "d1-sql-e1",
+        "prompt": "查询products的所有列。",
+        "hint": "星号 * 表示所有列。",
+        "answer": "SELECT * FROM products;",
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d1-sql-e2",
+        "prompt": "只查询商品的name和price。",
+        "hint": "SELECT后用逗号分隔要看的列。",
+        "answer": "SELECT name, price FROM products;",
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "values": [
+            [
+              "水",
+              3
+            ],
+            [
+              "面包",
+              5
+            ],
+            [
+              "牛奶",
+              8
+            ],
+            [
+              "水",
+              4
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d1-sql-e3",
+        "prompt": "查询price大于4的商品name和price。",
+        "hint": "先选列，再用WHERE price > 4筛选行。",
+        "answer": "SELECT name, price FROM products WHERE price > 4;",
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "values": [
+            [
+              "面包",
+              5
+            ],
+            [
+              "牛奶",
+              8
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d1-sql-e4",
+        "prompt": "查询stock等于0的商品name。",
+        "hint": "筛选使用 =，不是编程语言里的 ==。",
+        "answer": "SELECT name FROM products WHERE stock = 0;",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "牛奶"
+            ]
+          ]
+        }
+      }
+    ],
+    "2": [
+      {
+        "id": "d2-sql-e1",
+        "prompt": "新增商品(5, '茶', 6, 3)，依次对应id、name、price、stock。",
+        "hint": "写出INSERT INTO的列清单，VALUES中的值按同一顺序排列。",
+        "answer": "INSERT INTO products (id, name, price, stock) VALUES (5, '茶', 6, 3);",
+        "operation": "INSERT",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "affected": 1,
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ],
+            [
+              5,
+              "茶",
+              6,
+              3
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d2-sql-e2",
+        "prompt": "只把id为2的商品stock改成7。",
+        "hint": "SET指定新库存；WHERE id = 2只选中面包这一行。",
+        "answer": "UPDATE products SET stock = 7 WHERE id = 2;",
+        "operation": "UPDATE",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "affected": 1,
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              7
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d2-sql-e3",
+        "prompt": "只删除id为3的商品。",
+        "hint": "DELETE FROM指定表，再用WHERE限定编号；不用列清单。",
+        "answer": "DELETE FROM products WHERE id = 3;",
+        "operation": "DELETE",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "affected": 1,
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d2-sql-e4",
+        "prompt": "只把id为1的商品price改成4、stock改成8。",
+        "hint": "SET后用逗号分隔两个赋值，再写WHERE id = 1。",
+        "answer": "UPDATE products SET price = 4, stock = 8 WHERE id = 1;",
+        "operation": "UPDATE",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "affected": 1,
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              4,
+              8
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      }
+    ],
+    "3": [
+      {
+        "id": "d3-sql-e1",
+        "prompt": "查price不超过5且stock大于5的name。",
+        "hint": "用AND连接两个条件。",
+        "answer": "SELECT name FROM products WHERE price <= 5 AND stock > 5;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "水"
+            ],
+            [
+              "面包"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d3-sql-e2",
+        "prompt": "查名称是水或面包的id、name。",
+        "hint": "同列两种等值条件用OR连接。",
+        "answer": "SELECT id, name FROM products WHERE name = '水' OR name = '面包';",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              1,
+              "水"
+            ],
+            [
+              2,
+              "面包"
+            ],
+            [
+              4,
+              "水"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d3-sql-e3",
+        "prompt": "查stock未知的id、name。",
+        "hint": "未知是NULL，用IS NULL。",
+        "answer": "SELECT id, name FROM products WHERE stock IS NULL;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              3,
+              "牛奶"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d3-sql-e4",
+        "prompt": "查不是水且stock非NULL的name。",
+        "hint": "NOT否定名称条件，再用AND检查IS NOT NULL。",
+        "answer": "SELECT name FROM products WHERE NOT (name = '水') AND stock IS NOT NULL;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "面包"
+            ]
+          ]
+        }
+      }
+    ],
+    "4": [
+      {
+        "id": "d4-sql-e1",
+        "prompt": "查id、name，按price从低到高排列。",
+        "hint": "用ORDER BY price ASC。",
+        "answer": "SELECT id, name FROM products ORDER BY price ASC;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "ordered": true,
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              1,
+              "水"
+            ],
+            [
+              4,
+              "水"
+            ],
+            [
+              2,
+              "面包"
+            ],
+            [
+              3,
+              "牛奶"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d4-sql-e2",
+        "prompt": "查最贵两件商品的name、price。",
+        "hint": "ORDER BY price DESC，再LIMIT 2。",
+        "answer": "SELECT name, price FROM products ORDER BY price DESC, id ASC LIMIT 2;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "ordered": true,
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "values": [
+            [
+              "牛奶",
+              8
+            ],
+            [
+              "面包",
+              5
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d4-sql-e3",
+        "prompt": "查不重复的name。",
+        "hint": "把DISTINCT放在name前面。",
+        "answer": "SELECT DISTINCT name FROM products;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "水"
+            ],
+            [
+              "面包"
+            ],
+            [
+              "牛奶"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d4-sql-e4",
+        "prompt": "查id最大的商品id、name。",
+        "hint": "按id降序，只取一行。",
+        "answer": "SELECT id, name FROM products ORDER BY id DESC LIMIT 1;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "ordered": true,
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              4,
+              "水"
+            ]
+          ]
+        }
+      }
+    ],
+    "5": [
+      {
+        "id": "d5-sql-e1",
+        "prompt": "查名称以水开头的id、name。",
+        "hint": "LIKE的%匹配任意长度后缀。",
+        "answer": "SELECT id, name FROM products WHERE name LIKE '水%';",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水果', 4, 2);",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              1,
+              "水"
+            ],
+            [
+              4,
+              "水果"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d5-sql-e2",
+        "prompt": "查id为1或3的id、name。",
+        "hint": "用IN (1, 3)。",
+        "answer": "SELECT id, name FROM products WHERE id IN (1, 3);",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水果', 4, 2);",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              1,
+              "水"
+            ],
+            [
+              3,
+              "牛奶"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d5-sql-e3",
+        "prompt": "查price在3到5之间的name、price。",
+        "hint": "BETWEEN包含两端。",
+        "answer": "SELECT name, price FROM products WHERE price BETWEEN 3 AND 5;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水果', 4, 2);",
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "values": [
+            [
+              "水",
+              3
+            ],
+            [
+              "面包",
+              5
+            ],
+            [
+              "水果",
+              4
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d5-sql-e4",
+        "prompt": "查stock在0到2之间的id、stock。",
+        "hint": "两端0和2也要算。",
+        "answer": "SELECT id, stock FROM products WHERE stock BETWEEN 0 AND 2;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水果', 4, 2);",
+        "expected": {
+          "columns": [
+            "id",
+            "stock"
+          ],
+          "values": [
+            [
+              3,
+              0
+            ],
+            [
+              4,
+              2
+            ]
+          ]
+        }
+      }
+    ],
+    "6": [
+      {
+        "id": "d6-sql-e1",
+        "prompt": "同时统计总行数与stock非NULL的行数。",
+        "hint": "COUNT(*)数行，COUNT(stock)只数stock非NULL。",
+        "answer": "SELECT COUNT(*) AS total, COUNT(stock) AS known_stock FROM products;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "total",
+            "known_stock"
+          ],
+          "values": [
+            [
+              4,
+              3
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d6-sql-e2",
+        "prompt": "查price的最小值和最大值。",
+        "hint": "SELECT中用逗号分开MIN、MAX。",
+        "answer": "SELECT MIN(price), MAX(price) FROM products;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "MIN(price)",
+            "MAX(price)"
+          ],
+          "values": [
+            [
+              3,
+              8
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d6-sql-e3",
+        "prompt": "查库存合计和价格平均值。",
+        "hint": "SUM(stock)与AVG(price)。",
+        "answer": "SELECT SUM(stock), AVG(price) FROM products;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "SUM(stock)",
+            "AVG(price)"
+          ],
+          "values": [
+            [
+              18,
+              5.0
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d6-sql-e4",
+        "prompt": "统计stock大于0的商品行数。",
+        "hint": "先用WHERE筛选，再COUNT(*)。",
+        "answer": "SELECT COUNT(*) FROM products WHERE stock > 0;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "COUNT(*)"
+          ],
+          "values": [
+            [
+              3
+            ]
+          ]
+        }
+      }
+    ],
+    "7": [
+      {
+        "id": "d7-sql-e1",
+        "prompt": "确认已准备的库存修改。",
+        "hint": "写一条COMMIT提交。",
+        "answer": "COMMIT;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "operation": "COMMIT",
+        "setup": "BEGIN;\nUPDATE products SET stock = 8 WHERE id = 1;",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              8
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d7-sql-e2",
+        "prompt": "撤销已准备的库存修改。",
+        "hint": "写ROLLBACK，观察库存回到初始值。",
+        "answer": "ROLLBACK;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "operation": "ROLLBACK",
+        "setup": "BEGIN;\nUPDATE products SET stock = 8 WHERE id = 1;",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d7-sql-e3",
+        "prompt": "把id为2的stock改为7，由预设COMMIT提交。",
+        "hint": "只写带WHERE的UPDATE；事务边界已准备。",
+        "answer": "UPDATE products SET stock = 7 WHERE id = 2;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "operation": "UPDATE",
+        "setup": "BEGIN;",
+        "after": "COMMIT;",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "affected": 1,
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              7
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d7-sql-e4",
+        "prompt": "把id为1的stock改为8，再观察预设ROLLBACK。",
+        "hint": "写UPDATE即可；撤销后整表应恢复初始状态。",
+        "answer": "UPDATE products SET stock = 8 WHERE id = 1;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "operation": "UPDATE",
+        "setup": "BEGIN;",
+        "after": "ROLLBACK;",
+        "check": "SELECT id, name, price, stock FROM products ORDER BY id;",
+        "affected": 1,
+        "expectedBefore": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              8
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        },
+        "expected": {
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "values": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      }
+    ],
+    "8": [
+      {
+        "id": "d8-sql-e1",
+        "prompt": "按name统计每个名称的商品行数。",
+        "hint": "SELECT name, COUNT(*)，然后GROUP BY name。",
+        "answer": "SELECT name, COUNT(*) AS total FROM products GROUP BY name;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "name",
+            "total"
+          ],
+          "values": [
+            [
+              "水",
+              2
+            ],
+            [
+              "牛奶",
+              1
+            ],
+            [
+              "面包",
+              1
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d8-sql-e2",
+        "prompt": "按name计算price平均值。",
+        "hint": "将COUNT换成AVG(price)。",
+        "answer": "SELECT name, AVG(price) AS avg_price FROM products GROUP BY name;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "name",
+            "avg_price"
+          ],
+          "values": [
+            [
+              "水",
+              3.5
+            ],
+            [
+              "牛奶",
+              8.0
+            ],
+            [
+              "面包",
+              5.0
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d8-sql-e3",
+        "prompt": "只保留行数大于1的name及行数。",
+        "hint": "分组后用HAVING COUNT(*) > 1。",
+        "answer": "SELECT name, COUNT(*) AS total FROM products GROUP BY name HAVING COUNT(*) > 1;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "name",
+            "total"
+          ],
+          "values": [
+            [
+              "水",
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d8-sql-e4",
+        "prompt": "对price不超过5的商品，按name汇总stock。",
+        "hint": "WHERE先筛行，再GROUP BY与SUM。",
+        "answer": "SELECT name, SUM(stock) AS total_stock FROM products WHERE price <= 5 GROUP BY name;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);",
+        "expected": {
+          "columns": [
+            "name",
+            "total_stock"
+          ],
+          "values": [
+            [
+              "水",
+              12
+            ],
+            [
+              "面包",
+              6
+            ]
+          ]
+        }
+      }
+    ],
+    "9": [
+      {
+        "id": "d9-sql-e1",
+        "prompt": "查每条订单的order_id和商品name。",
+        "hint": "orders别名o，products别名p；按product_id=id配对。",
+        "answer": "SELECT o.id AS order_id, p.name FROM orders AS o INNER JOIN products AS p ON o.product_id = p.id;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "order_id",
+            "name"
+          ],
+          "values": [
+            [
+              101,
+              "水"
+            ],
+            [
+              102,
+              "水"
+            ],
+            [
+              103,
+              "面包"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d9-sql-e2",
+        "prompt": "查订单101的商品name和quantity。",
+        "hint": "连接后用WHERE o.id = 101。",
+        "answer": "SELECT p.name, o.quantity FROM orders AS o INNER JOIN products AS p ON o.product_id = p.id WHERE o.id = 101;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "name",
+            "quantity"
+          ],
+          "values": [
+            [
+              "水",
+              2
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d9-sql-e3",
+        "prompt": "查quantity大于1的order_id和商品name。",
+        "hint": "用o.quantity > 1筛选连接结果。",
+        "answer": "SELECT o.id AS order_id, p.name FROM orders AS o INNER JOIN products AS p ON o.product_id = p.id WHERE o.quantity > 1;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "order_id",
+            "name"
+          ],
+          "values": [
+            [
+              101,
+              "水"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d9-sql-e4",
+        "prompt": "查所有水订单的order_id和quantity。",
+        "hint": "筛选p.name；两个订单都要保留。",
+        "answer": "SELECT o.id AS order_id, o.quantity FROM orders AS o INNER JOIN products AS p ON o.product_id = p.id WHERE p.name = '水';",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "order_id",
+            "quantity"
+          ],
+          "values": [
+            [
+              101,
+              2
+            ],
+            [
+              102,
+              1
+            ]
+          ]
+        }
+      }
+    ],
+    "10": [
+      {
+        "id": "d10-sql-e1",
+        "prompt": "保留全部商品，查p.id和对应order_id。",
+        "hint": "products放左侧；同一商品两条订单要输出两次。",
+        "answer": "SELECT p.id, o.id AS order_id FROM products AS p LEFT JOIN orders AS o ON p.id = o.product_id;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "id",
+            "order_id"
+          ],
+          "values": [
+            [
+              1,
+              101
+            ],
+            [
+              1,
+              102
+            ],
+            [
+              2,
+              103
+            ],
+            [
+              3,
+              null
+            ],
+            [
+              4,
+              null
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d10-sql-e2",
+        "prompt": "查没有订单的商品id、name。",
+        "hint": "LEFT JOIN后检查o.id IS NULL。",
+        "answer": "SELECT p.id, p.name FROM products AS p LEFT JOIN orders AS o ON p.id = o.product_id WHERE o.id IS NULL;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              3,
+              "牛奶"
+            ],
+            [
+              4,
+              "水"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d10-sql-e3",
+        "prompt": "查id为3的name和order_id，仍保留无订单商品。",
+        "hint": "LEFT JOIN后只用p.id筛左行。",
+        "answer": "SELECT p.name, o.id AS order_id FROM products AS p LEFT JOIN orders AS o ON p.id = o.product_id WHERE p.id = 3;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "name",
+            "order_id"
+          ],
+          "values": [
+            [
+              "牛奶",
+              null
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d10-sql-e4",
+        "prompt": "保留所有商品，只匹配quantity大于1的订单，查p.id、order_id。",
+        "hint": "把o.quantity > 1放在ON中，而不是WHERE。",
+        "answer": "SELECT p.id, o.id AS order_id FROM products AS p LEFT JOIN orders AS o ON p.id = o.product_id AND o.quantity > 1;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "id",
+            "order_id"
+          ],
+          "values": [
+            [
+              1,
+              101
+            ],
+            [
+              2,
+              null
+            ],
+            [
+              3,
+              null
+            ],
+            [
+              4,
+              null
+            ]
+          ]
+        }
+      }
+    ],
+    "11": [
+      {
+        "id": "d11-sql-e1",
+        "prompt": "合并id为1、2的name和id为4的name，保留重复。",
+        "hint": "两段SELECT之间用UNION ALL。",
+        "answer": "SELECT name FROM products WHERE id IN (1, 2) UNION ALL SELECT name FROM products WHERE id = 4;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE VIEW available_products AS SELECT id, name, stock FROM products WHERE stock > 0;",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "水"
+            ],
+            [
+              "面包"
+            ],
+            [
+              "水"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d11-sql-e2",
+        "prompt": "同样合并两段name，但去除重复。",
+        "hint": "把UNION ALL换为UNION。",
+        "answer": "SELECT name FROM products WHERE id IN (1, 2) UNION SELECT name FROM products WHERE id = 4;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE VIEW available_products AS SELECT id, name, stock FROM products WHERE stock > 0;",
+        "expected": {
+          "columns": [
+            "name"
+          ],
+          "values": [
+            [
+              "水"
+            ],
+            [
+              "面包"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d11-sql-e3",
+        "prompt": "从available_products查id、name。",
+        "hint": "视图已创建，直接SELECT指定两列。",
+        "answer": "SELECT id, name FROM available_products;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE VIEW available_products AS SELECT id, name, stock FROM products WHERE stock > 0;",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              1,
+              "水"
+            ],
+            [
+              2,
+              "面包"
+            ],
+            [
+              4,
+              "水"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d11-sql-e4",
+        "prompt": "从available_products查stock大于5的name、stock。",
+        "hint": "对视图再用WHERE筛选。",
+        "answer": "SELECT name, stock FROM available_products WHERE stock > 5;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE VIEW available_products AS SELECT id, name, stock FROM products WHERE stock > 0;",
+        "expected": {
+          "columns": [
+            "name",
+            "stock"
+          ],
+          "values": [
+            [
+              "水",
+              10
+            ],
+            [
+              "面包",
+              6
+            ]
+          ]
+        }
+      }
+    ],
+    "12": [
+      {
+        "id": "d12-sql-e1",
+        "prompt": "查price高于全表平均价的name、price。",
+        "hint": "括号内用SELECT AVG(price)。",
+        "answer": "SELECT name, price FROM products WHERE price > (SELECT AVG(price) FROM products);",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "values": [
+            [
+              "牛奶",
+              8
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d12-sql-e2",
+        "prompt": "查有订单的商品id、name，每件商品一行。",
+        "hint": "EXISTS中用o.product_id = p.id。",
+        "answer": "SELECT p.id, p.name FROM products AS p WHERE EXISTS (SELECT 1 FROM orders AS o WHERE o.product_id = p.id);",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              1,
+              "水"
+            ],
+            [
+              2,
+              "面包"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d12-sql-e3",
+        "prompt": "查没有订单的商品id、name。",
+        "hint": "将存在性条件改为NOT EXISTS。",
+        "answer": "SELECT p.id, p.name FROM products AS p WHERE NOT EXISTS (SELECT 1 FROM orders AS o WHERE o.product_id = p.id);",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "expected": {
+          "columns": [
+            "id",
+            "name"
+          ],
+          "values": [
+            [
+              3,
+              "牛奶"
+            ],
+            [
+              4,
+              "水"
+            ]
+          ]
+        }
+      },
+      {
+        "id": "d12-sql-e4",
+        "prompt": "查stock大于0的最便宜两件商品name、price。",
+        "hint": "WHERE先筛选，再ORDER BY price ASC和LIMIT 2。",
+        "answer": "SELECT name, price FROM products WHERE stock > 0 ORDER BY price ASC, id ASC LIMIT 2;",
+        "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);",
+        "ordered": true,
+        "expected": {
+          "columns": [
+            "name",
+            "price"
+          ],
+          "values": [
+            [
+              "水",
+              3
+            ],
+            [
+              "水",
+              4
+            ]
+          ]
+        }
+      }
+    ]
+  },
+  "fixtures": {
+    "3": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              null
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);"
+    },
+    "4": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);"
+    },
+    "5": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水果",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水果', 4, 2);"
+    },
+    "6": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              null
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, NULL);\nINSERT INTO products VALUES (4, '水', 4, 2);"
+    },
+    "7": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);"
+    },
+    "8": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);"
+    },
+    "9": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        },
+        {
+          "name": "orders",
+          "columns": [
+            "id",
+            "product_id",
+            "quantity"
+          ],
+          "rows": [
+            [
+              101,
+              1,
+              2
+            ],
+            [
+              102,
+              1,
+              1
+            ],
+            [
+              103,
+              2,
+              1
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);"
+    },
+    "10": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        },
+        {
+          "name": "orders",
+          "columns": [
+            "id",
+            "product_id",
+            "quantity"
+          ],
+          "rows": [
+            [
+              101,
+              1,
+              2
+            ],
+            [
+              102,
+              1,
+              1
+            ],
+            [
+              103,
+              2,
+              1
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);"
+    },
+    "11": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE VIEW available_products AS SELECT id, name, stock FROM products WHERE stock > 0;"
+    },
+    "12": {
+      "tables": [
+        {
+          "name": "products",
+          "columns": [
+            "id",
+            "name",
+            "price",
+            "stock"
+          ],
+          "rows": [
+            [
+              1,
+              "水",
+              3,
+              10
+            ],
+            [
+              2,
+              "面包",
+              5,
+              6
+            ],
+            [
+              3,
+              "牛奶",
+              8,
+              0
+            ],
+            [
+              4,
+              "水",
+              4,
+              2
+            ]
+          ]
+        },
+        {
+          "name": "orders",
+          "columns": [
+            "id",
+            "product_id",
+            "quantity"
+          ],
+          "rows": [
+            [
+              101,
+              1,
+              2
+            ],
+            [
+              102,
+              1,
+              1
+            ],
+            [
+              103,
+              2,
+              1
+            ]
+          ]
+        }
+      ],
+      "seed": "CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price INTEGER NOT NULL, stock INTEGER);\nINSERT INTO products VALUES (1, '水', 3, 10);\nINSERT INTO products VALUES (2, '面包', 5, 6);\nINSERT INTO products VALUES (3, '牛奶', 8, 0);\nINSERT INTO products VALUES (4, '水', 4, 2);\nCREATE TABLE orders (id INTEGER PRIMARY KEY, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL);\nINSERT INTO orders VALUES (101, 1, 2);\nINSERT INTO orders VALUES (102, 1, 1);\nINSERT INTO orders VALUES (103, 2, 1);"
+    }
+  }
+}

@@ -1,0 +1,166 @@
+<section class="card lesson-goals">
+  <h2>本课的三个问题</h2>
+  <ol class="objectives"><li>数据库、表、行、列和SQL分别是什么？</li><li>怎样认出一条商品记录，再找到订单引用的商品？</li><li>CHAR和VARCHAR的长度，数的是字符还是字节？</li></ol>
+  <div class="day-source-links" data-day-sources></div>
+</section>
+
+<section class="lesson-section" id="d1-warmup" data-phase="recall">
+  <div class="section-heading"><h2><span class="section-number">01</span>回忆检查</h2></div>
+  <p>先看看这三个词，你现在能举例解释吗？</p>
+  <div class="warmup-grid">
+    <div><strong>数据库</strong><select data-save="d1-warm-database" aria-label="数据库的熟悉程度"><option value="">请选择</option><option>完全不知道</option><option>见过这个词</option><option>能举例解释</option></select></div>
+    <div><strong>主键</strong><select data-save="d1-warm-key" aria-label="主键的熟悉程度"><option value="">请选择</option><option>完全不知道</option><option>见过这个词</option><option>能举例解释</option></select></div>
+    <div><strong>SQL</strong><select data-save="d1-warm-sql" aria-label="SQL的熟悉程度"><option value="">请选择</option><option>完全不知道</option><option>见过这个词</option><option>能举例解释</option></select></div>
+  </div>
+  <label class="inline-label" for="d1-warm-answer">两件商品都叫“水”，你会怎样准确区分它们？</label>
+  <textarea id="d1-warm-answer" data-save="d1-warm-answer" rows="3" maxlength="20000" placeholder="先写自己的直觉，不用查答案。"></textarea>
+</section>
+
+<section class="lesson-section lesson-main" id="d1-main" data-phase="main">
+  <div class="section-heading"><h2><span class="section-number">02</span>今日主线</h2></div>
+
+  <article class="topic" id="d1-tables" data-sources="1" data-topic="数据库、表、行、列与SQL">
+    <div class="topic-heading"><span class="topic-number">01</span><h3>先认识数据库、表与SQL</h3><button class="topic-note-button" data-note="d1-tables" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <p>小店要记录商品名称、价格和库存。只把这些信息写成一大段文字，程序就很难准确回答“哪些商品已经没库存”。<strong>把数据按规则组织起来，再提供查找和修改的能力，数据库系统就能帮助处理这些问题。</strong></p>
+    <div class="three-col">
+      <div class="mini-card"><strong>数据库</strong><p>有组织的数据集合。这里可以有商品表、订单表等数据。</p></div>
+      <div class="mini-card"><strong>MySQL</strong><p>数据库管理系统：管理和操作数据库的软件。它不是某一张商品表。</p></div>
+      <div class="mini-card"><strong>SQL</strong><p>向数据库表达操作的语言，例如查询商品。它不是MySQL软件本身。</p></div>
+    </div>
+    <h4>表中的一行和一列，各表示什么？</h4>
+    <p>把商品组织成表，表名叫<code>products</code>。一<strong>行</strong>是一条商品记录；一<strong>列</strong>表达一种属性。四列分别是<code>id</code>编号、<code>name</code>名称、<code>price</code>价格和<code>stock</code>库存。列名告诉你“这一类值是什么意思”，格子里的值属于具体的一行。</p>
+    <p>例如，编号2这一行记录“面包、价格5、库存6”。想查看这一件商品，是选择行；只想看名称和价格，是选择列。<strong>筛选行和选择列可以同时进行，但都不会因为查询而删除原来的数据。</strong></p>
+    <!-- EXAMPLE:d1-tables -->
+    <h4>“关系型”首先指数据模型，不是两表间的箭头</h4>
+    <p>关系模型用“关系”组织记录，入门时可以用表理解：各行按同一组列表达属性。把两张表关联起来是它能做的事情，但不是名称的全部含义。<strong>即使只有一张表，或者没有声明外键，也可以使用关系型数据库。</strong></p>
+    <div class="callout"><strong>表和查询结果也要分开。</strong><p>商品表保存原有记录；查询可以返回其中几行、几列组成的结果。没有指定排序时，不能把结果碰巧出现的顺序当成保证。</p></div>
+    <details class="mini-check"><summary>小检查：查出面包的价格，改变了商品表吗？</summary><p>没有。读取并返回price的值，不等于修改price。修改数据要用另一类语句，后面再学习。</p></details>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d1-tables"></div><button class="text-button" data-feedback="d1-tables">这里还没懂</button></div>
+  </article>
+
+  <article class="topic" id="d1-models" data-sources="2" data-topic="关系型与非关系型的数据组织">
+    <div class="topic-heading"><span class="topic-number">02</span><h3>关系型与非关系型：数据怎样组织</h3><button class="topic-note-button" data-note="d1-models" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <h4>关系型与非关系型的定义</h4>
+    <p><strong>数据模型，就是组织和表达数据的一套规则。</strong>用表记录商品，就是一种组织方式。数据库按主要采用的数据模型，分为关系型与非关系型。</p>
+    <div class="document-pair">
+      <div class="mini-card"><strong>关系型数据库</strong><p>以关系模型组织数据的数据库。入门时可以把“关系”理解为表：一张表用共同的列描述记录，每一行是一条记录。MySQL是常见的关系型数据库。</p></div>
+      <div class="mini-card"><strong>非关系型数据库</strong><p>不以关系模型作为核心数据模型的数据库的总称。它们可以主要用文档、键值或图等方式组织数据。因此，“非关系型”不是一种单独的模型。</p></div>
+    </div>
+    <h4>关系型：用表记录商品</h4>
+    <p>回到<code>products</code>表：先约定<code>id</code>、<code>name</code>、<code>price</code>、<code>stock</code>四列，再让每条商品记录按这套结构填写不同的值。例如，“水”和“面包”都有名称、价格和库存，我们可以用同一条查询找出库存为0的商品。</p>
+    <h4>非关系型的常见模型</h4>
+    <div class="table-wrap"><table class="model-table concept-map"><thead><tr><th scope="col">常见模型</th><th scope="col">怎样组织数据</th><th scope="col">一个小例子</th></tr></thead><tbody>
+      <tr><td><strong>文档</strong><br>例如MongoDB</td><td>把一条记录组织成一份带字段的文档。这里的“文档”不是Word文件，而是一份结构化记录。</td><td>商品1：编号、名称、标签；商品2：编号、名称、重量。</td></tr>
+      <tr><td><strong>键值</strong><br>例如Redis的常见用法</td><td>通过一个键找到对应的值。键相当于查找用的标识，值是它对应的数据。</td><td><code>product:1 → 水</code>，用<code>product:1</code>找到“水”。</td></tr>
+      <tr><td><strong>图</strong></td><td>用节点表示对象，用边表示对象之间的联系。</td><td>“小李”和“商品1”是两个节点，“购买”连接它们。</td></tr>
+    </tbody></table></div>
+    <p>表中的列和文档中的字段都能表达属性，比如<code>name</code>表示名称。两份商品文档可以带不同的附加字段：<code>tags</code>表示标签，方括号中的多个标签是一份列表，也叫数组。</p>
+    <!-- EXAMPLE:d1-models -->
+    <h4>能灵活表达，不等于没有任何规则</h4>
+    <p>两份文档可以有不同的附加字段，但文档数据库也可以检查数据是否符合约定。部分系统还支持<strong>事务</strong>，即把一组操作作为一个整体处理；后面会专门学习。关系型数据库也能支持文档式的数据。<strong>分类看主要数据模型，不是看它能不能提供某一项功能。</strong></p>
+    <div class="callout"><strong>数据模型不等于性能结论。</strong><p>是否更快、有哪些规则、怎样支持事务，要看具体系统和使用场景，不能只凭分类下结论。</p></div>
+    <details class="mini-check"><summary>关系型与非关系型的核心区别是什么？</summary><p>关系型以关系模型组织数据，通常用表理解，例如MySQL。非关系型是其他数据模型的总称，例如MongoDB的文档模型；不是统一的“更快的表”。</p></details>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d1-models"></div><button class="text-button" data-feedback="d1-models">这里还没懂</button></div>
+  </article>
+
+  <article class="topic" id="d1-keys" data-sources="27" data-topic="主键、超键、候选键与外键">
+    <div class="topic-heading"><span class="topic-number">03</span><h3>键：认出一行，再找到关联</h3><button class="topic-note-button" data-note="d1-keys" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <h4>键的含义与四个核心概念</h4>
+    <p>在表的设计中，<strong>键是用来识别记录或表达引用关系的一列或一组列</strong>。“一组列”可以只有一列，也可以由多列组合而成。它不是键盘上的按键，也不是把某个字段的名字改成“key”。</p>
+    <p><strong>超键、候选键、主键</strong>围绕“怎样唯一识别本表的一行”，<strong>外键</strong>围绕“这一行引用了什么”。它们不是四选一的关系，同一组列可以同时符合多个定义。</p>
+    <div class="table-wrap"><table class="model-table concept-map"><thead><tr><th scope="col">概念</th><th scope="col">定义</th><th scope="col">回答的问题</th></tr></thead><tbody>
+      <tr><td><strong>超键</strong></td><td>能唯一识别一行的列或列组合。</td><td>这些列合起来，能认出是哪一行吗？</td></tr>
+      <tr><td><strong>候选键</strong></td><td>不能再删掉任何一列的超键。</td><td>能认出一行，而且没有多余列吗？</td></tr>
+      <tr><td><strong>主键</strong></td><td>从候选键中选来作为表的主要标识的键。</td><td>这张表正式选哪一个标识？</td></tr>
+      <tr><td><strong>外键</strong></td><td>按声明的引用规则，引用另一张表或本表中相应键的列或列组合。</td><td>这条记录引用了哪条记录？</td></tr>
+    </tbody></table></div>
+    <p class="micro">键还有其他称呼。例如“联合键/复合键”表示一个键由多列组成，它也可以是主键。</p>
+    <h4>商品表中的键</h4>
+    <p>商品1和商品4都叫“水”，所以只凭<code>name</code>不能准确区分。我们在设计时约定<strong><code>id</code>唯一且不能为空</strong>，用编号识别商品。下面的例子都以这条设计规则为前提，而不是靠四行样本碰巧没有重复来猜。</p>
+    <p class="micro">记号<code>{id, name}</code>表示把id与name两列合起来考虑；花括号是这里解释列组合的记号，不是要执行的SQL。</p>
+    <h4>1. 超键：能唯一识别记录</h4>
+    <p>本例中<code>{id}</code>能找到一件商品，是超键。<code>{id, name}</code>也能找到，因为id本身已经唯一；它虽然多带了name，仍符合超键的定义。</p>
+    <h4>2. 候选键：没有多余列的超键</h4>
+    <p><code>{id}</code>符合；<code>{id, name}</code>不符合，因为删掉name，剩下的id仍能唯一识别商品。候选键的“最小”指<strong>不能再删列</strong>，不是只允许所有候选键中列数最少的那一个。</p>
+    <h4>3. 主键：选定的主要标识</h4>
+    <p>本例选id作为商品表的主键。因此id既是超键，也是候选键，同时又是选定的主键。一个表至多声明一个主键，但这个主键可以包含多列；主键各列都不能为NULL。</p>
+    <div class="callout"><strong>前三种键的关系：能识别 → 去掉多余列 → 选定主要标识。</strong><p>所有候选键都是超键，选定的主键是候选键之一。不要把它们当成互不相干的三类字段。</p></div>
+    <h4>4. 外键：引用另一条记录</h4>
+    <p>“约束”是要求数据遵守的规则；“参照约束”就是检查引用关系的规则。订单101购买商品1，我们既要识别“哪张订单”，也要知道“买了哪件商品”。</p>
+    <p><code>orders</code>是订单表，<code>orders.id</code>表示它自己的订单编号；<code>orders.product_id</code>表示订单中记录的商品编号；<code>quantity</code>表示购买件数。若声明product_id引用<code>products.id</code>，这里的product_id就是外键。它不是订单自己的主键，而是在引用商品。</p>
+    <p>多条订单可以买同一件商品，因此<strong>外键的值可以重复</strong>：订单101和102都可以填product_id=1。</p>
+    <!-- EXAMPLE:d1-keys -->
+    <div class="callout"><strong>约束要声明，不能靠猜。</strong><p>声明并启用外键检查时，引用不存在的商品会被拒绝。没有外键声明时，数据库不会自动补上这一业务规则。NULL表示缺失或未知的值，不等于0或空字符串；外键本身不自动禁止NULL，如果订单必须有商品，还需另外要求该列不能为空。</p></div>
+    <details class="mini-check"><summary>订单编号和商品编号恰好相同，是外键吗？</summary><p>不是看数字碰巧相同。要看设计中谁引用谁，以及是否声明了相应约束；orders.id用于识别订单，orders.product_id才是这里引用商品的列。</p></details>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d1-keys"></div><button class="text-button" data-feedback="d1-keys">这里还没懂</button></div>
+  </article>
+
+  <article class="topic" id="d1-types" data-sources="37" data-topic="基本类型与CHAR、VARCHAR">
+    <div class="topic-heading"><span class="topic-number">04</span><h3>字段类型：怎样解释一个值</h3><button class="topic-note-button" data-note="d1-types" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <h4>字段名与字段类型</h4>
+    <p><strong>字段就是表中的列。</strong>例如<code>name</code>是字段名，告诉你这一列表示商品名称。<strong>字段类型</strong>则约定这一列的数据怎样表示和处理：名称是文字，库存是整数，日期是时间信息，不能只看字段名来决定类型。</p>
+    <p>比如给库存取名<code>stock</code>，并不自动让它成为整数类型；设计表时还要为它选择类型。</p>
+    <div class="table-wrap"><table class="model-table concept-map"><thead><tr><th scope="col">常见类别</th><th scope="col">用来表达什么</th><th scope="col">类型示例</th></tr></thead><tbody>
+      <tr><td><strong>数值</strong></td><td>库存10这样的整数，或金额8.50这样的精确小数。</td><td><code>INT</code>：整数<br><code>DECIMAL</code>：精确小数</td></tr>
+      <tr><td><strong>字符串</strong></td><td>名称“牛奶”、代码“AB”等文字。字符串就是一串字符。</td><td><code>CHAR</code>、<code>VARCHAR</code><br><code>TEXT</code>也是文本类型</td></tr>
+      <tr><td><strong>日期与时间</strong></td><td>某一天，或包含时分秒的日期时间。</td><td><code>DATE</code>：日期<br><code>DATETIME</code>：日期时间</td></tr>
+      <tr><td><strong>二进制数据</strong></td><td>图片等文件的原始内容，而不是图片文件名这串文字。</td><td><code>BLOB</code>：二进制数据</td></tr>
+    </tbody></table></div>
+    <p class="micro">上表列出常见类型，不是完整类型清单。商品的id、stock可用整数类型；name需要字符串类型。本课练习用整数价格简化，实际金额通常选DECIMAL等合适的精确数值类型。</p>
+    <h4>CHAR与VARCHAR：固定长度与变长字符串</h4>
+    <p>CHAR和VARCHAR都属于字符串类型，区别在于怎样处理字符串长度。</p>
+    <div class="document-pair">
+      <div class="mini-card"><strong>CHAR(n)：固定长度字符串</strong><p>按声明的长度处理字符串。例如CHAR(4)按4个字符的长度处理；写入短值时会补空格到这个长度。</p></div>
+      <div class="mini-card"><strong>VARCHAR(n)：变长字符串</strong><p>保存实际内容并带上长度信息，n规定内容最多有多少个字符。例如VARCHAR(4)不需要因为声明4，就把每个短值都补成4个字符。</p></div>
+    </div>
+    <p><strong>两者括号里的n都是字符数，不是字节数。</strong>字符是“猫”、字母“A”这样的文字单位；字节是存储信息的计量单位。字符如何编码成字节，要看字符集，因此不能把每个汉字固定算成两个字节。</p>
+    <h4>例：写入两个字符“AB”</h4>
+    <p><code>CHAR(4)</code>补两个空格；<code>VARCHAR(4)</code>保存AB这两个字符和相应长度信息。<strong>VARCHAR存的是内容，不是只存一个指针。</strong></p>
+    <!-- EXAMPLE:d1-types -->
+    <h4>长度、取回、比较，不要混为一件事</h4>
+    <p>默认取回时，CHAR的尾部空格会被去掉；VARCHAR通常保留合法长度内的尾空格。字符串比较是否忽略尾空格，又与<strong>排序规则</strong>有关；排序规则就是系统比较文字时使用的规则。超长值如何处理还受SQL模式等条件影响，不能一概说会安静地截掉。</p>
+    <div class="callout"><strong>不要背“CHAR一定更快”。</strong><p>固定和变长是类型的基本区别；真实空间、比较行为和性能还要看字符集、存储引擎、数据与查询。名称长短变化较多时，VARCHAR是常见选择，但这不是通用性能结论。</p></div>
+    <details class="mini-check"><summary>VARCHAR(4)能否理解为最多4字节？</summary><p>不能。它限制的是字符数，实际字节受字符集影响。另外还要考虑长度信息与整行大小等限制。</p></details>
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d1-types"></div><button class="text-button" data-feedback="d1-types">这里还没懂</button></div>
+  </article>
+
+</section>
+
+<section class="lesson-section lesson-practice" id="d1-practice" data-phase="sql">
+  <div class="section-heading"><h2><span class="section-number">03</span>SQL短练习</h2></div>
+  <article class="topic sql-topic" id="d1-sql" data-sources="" data-references="https://www.w3schools.com/mysql/mysql_select.asp|https://www.w3schools.com/mysql/mysql_where.asp" data-topic="SELECT与WHERE短练习">
+    <div class="topic-heading"><h3>选列与筛选行</h3><button class="topic-note-button" data-note="d1-sql" aria-controls="topic-notes">笔记</button></div>
+    <div class="topic-source-links" data-topic-sources></div>
+    <p><code>SELECT</code>说明要哪些列，<code>FROM</code>说明从哪张表取，<code>WHERE</code>说明哪些行符合条件。星号<code>*</code>表示所有列；列之间用逗号分隔，字符串值用单引号包住。</p>
+    <div class="sql-syntax"><pre><code>SELECT name FROM products;</code></pre><p>从商品表取所有记录的名称。</p><pre><code>SELECT name FROM products WHERE price = 3;</code></pre><p>只取价格等于3的记录，再返回名称。<code>=</code>表示等于，<code>&gt;</code>表示大于；WHERE在这里筛选行，不修改数据。</p></div>
+    <p class="micro">关键字大小写通常不影响这里的写法；建议保持一致。本课表名和列名按下方数据表书写，先不用排序和复杂条件。</p>
+    <div class="callout"><strong>这是SQLite语法练习，不是MySQL原理实验。</strong><p>下面真实执行本课的通用SELECT查询。前面的键、类型和数据模型讲解按MySQL及相应理论解释，不用这个练习引擎验证MySQL的类型或锁。</p></div>
+    <!-- SQL_PRACTICE:1 -->
+    <div class="topic-actions"><div class="rating-group" data-topic-rating="d1-sql"></div><button class="text-button" data-feedback="d1-sql">这里还没懂</button></div>
+  </article>
+</section>
+
+<section class="lesson-section" id="d1-quiz" data-phase="quiz">
+  <div class="section-heading"><h2><span class="section-number">04</span>理解自测</h2></div>
+  <p>先用自己的话回答，再展开参考答案。</p>
+  <article class="question" data-quiz="d1-q1"><h3>1 / MySQL、SQL和商品表，是同一种东西吗？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>不是。MySQL是管理数据库的软件；SQL是表达查询和修改的语言；商品表是被管理的一部分数据。程序用SQL让MySQL对表进行操作。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d1-q2"><h3>2 / 两件商品都叫“水”，怎样准确引用其中一件？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>使用设计时约定唯一且非空的商品主键，例如id。订单用product_id引用对应商品。商品名称可能重复，订单也不能只凭“水”来区分商品1和商品4。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d1-q3"><h3>3 / {id, name}为什么可以是超键，却不是候选键？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>本例约定id本身唯一，因此{id, name}也能识别一行，是超键。但删掉name后{id}仍能识别，所以它不是不可再删列的候选键。候选键的“最小”不是比较所有候选键的列数。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d1-q4"><h3>4 / VARCHAR(4)就是最多4字节，并且比CHAR慢吗？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>两种说法都不能这样下结论。4是字符数，实际字节看字符集；VARCHAR是变长、CHAR是固定长度，性能还取决于存储引擎、数据和查询。尾空格的取回与比较行为也要分开。</p></div></details><div class="quiz-rating"></div></article>
+  <article class="question" data-quiz="d1-q5"><h3>5 / 没有外键就不是关系型，非关系型一定没有事务，对吗？</h3><div class="quiz-input"></div><details><summary>查看参考答案</summary><div class="answer"><p>都不对。“关系型”首先指按关系组织数据的模型，不以是否声明外键来判断。非关系型有多种系统和模型，一些文档数据库也支持多文档事务；不能只凭分类否定其能力。</p></div></details><div class="quiz-rating"></div></article>
+  <p id="quiz-summary" class="notice" hidden></p>
+</section>
+
+<section class="lesson-section" id="d1-close" data-phase="close">
+  <div class="section-heading"><h2><span class="section-number">05</span>收尾记录</h2></div>
+  <p>不看正文，你能解释下面三件事吗？</p>
+  <div class="checklist"><label><input type="checkbox" data-save="d1-exit-table">用商品表解释数据库、SQL、行和列。</label><label><input type="checkbox" data-save="d1-exit-key">区分主键、候选键、超键和外键，并说明同名商品怎样关联。</label><label><input type="checkbox" data-save="d1-exit-type">区分CHAR与VARCHAR，不把字符数当字节数，不把模型分类当性能结论。</label></div>
+  <label class="inline-label" for="d1-exit-note">今天最清楚的一点，以及仍卡住的一点</label><textarea id="d1-exit-note" data-save="d1-exit-note" rows="3" maxlength="20000" placeholder="例如：我理解了候选键为什么不能有多余列；但仍不明白……"></textarea>
+  <div class="close-actions"><button id="mark-complete" class="primary">标记本日完成</button><button data-feedback="d1-close">整理本日反馈</button><div id="next-lesson"></div></div><p id="completion-note" class="completion-note"></p>
+</section>
+
+<details class="source-map lesson-sources"><summary>网站知识点与参考资料</summary><div data-day-references></div><ul><li><a href="https://dev.mysql.com/doc/refman/8.4/en/what-is-mysql.html" target="_blank" rel="noopener noreferrer">MySQL官方：数据库管理系统与关系模型</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/create-table.html" target="_blank" rel="noopener noreferrer">MySQL官方：主键与建表约束</a></li><li><a href="https://dev.mysql.com/doc/refman/8.4/en/char.html" target="_blank" rel="noopener noreferrer">MySQL官方：CHAR与VARCHAR</a></li></ul></details>
